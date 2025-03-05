@@ -4,15 +4,71 @@
  */
 
 import React, { JSX, RefObject, useEffect, useRef, useState } from "react";
-import { Note, Group, Items } from "../schema/app_schema.js";
 import { moveItem } from "../utils/app_helpers.js";
 import { dragType, getRotation, selectAction } from "../utils/utils.js";
 import { testRemoteNoteSelection, updateRemoteNoteSelection } from "../utils/session_helpers.js";
 import { ConnectableElement, useDrag, useDrop } from "react-dnd";
 import { useTransition } from "react-transition-state";
-import { Tree } from "fluid-framework";
-import { IconButton, MiniThumb, DeleteButton } from "./buttonux.js";
+import { SchemaFactory, Tree } from "fluid-framework";
+import { IconButton, MiniThumb, DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
+import { Items } from "./items.js";
+import { Group } from "./group.js";
+
+const sf = new SchemaFactory("10d348df-90a9-4e2c-a45d-21ba6c66b799");
+
+// Define the schema for the note object.
+// Helper functions for working with the data contained in this object
+// are included in this class definition as methods.
+export class Note extends sf.object(
+	"Note",
+	// Fields for Notes which SharedTree will store and synchronize across clients.
+	// These fields are exposed as members of instances of the Note class.
+	{
+		/**
+		 * Id to make building the React app simpler.
+		 */
+		id: sf.string,
+		text: sf.string,
+		author: sf.string,
+		/**
+		 * Sequence of user ids to track which users have voted on this note.
+		 */
+		votes: sf.array(sf.string),
+		created: sf.number,
+		lastChanged: sf.number,
+	},
+) {
+	// Update the note text and also update the timestamp in the note
+	public readonly updateText = (text: string) => {
+		this.lastChanged = new Date().getTime();
+		this.text = text;
+	};
+
+	public readonly toggleVote = (user: string) => {
+		const index = this.votes.indexOf(user);
+		if (index > -1) {
+			this.votes.removeAt(index);
+		} else {
+			this.votes.insertAtEnd(user);
+		}
+
+		this.lastChanged = new Date().getTime();
+	};
+
+	/**
+	 * Removes a node from its parent {@link Items}.
+	 * If the note is not in an {@link Items}, it is left unchanged.
+	 */
+	public readonly delete = () => {
+		const parent = Tree.parent(this);
+		// Use type narrowing to ensure that parent is Items as expected for a note.
+		if (Tree.is(parent, Items)) {
+			const index = parent.indexOf(this);
+			parent.removeAt(index);
+		}
+	};
+}
 
 export function RootNoteWrapper(props: {
 	note: Note;

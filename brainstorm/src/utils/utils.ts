@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Note } from "../schema/app_schema.js";
+import { Note } from "../components/note.js";
 
 export const undefinedUserId = "[UNDEFINED]";
 

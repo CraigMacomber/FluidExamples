@@ -4,13 +4,13 @@
  */
 
 import React, { JSX, useEffect, useState } from "react";
-import { Items } from "../schema/app_schema.js";
 import { Session } from "../schema/session_schema.js";
 import "../output.css";
 import { IFluidContainer, IMember, IServiceAudience, TreeView } from "fluid-framework";
 import { undefinedUserId } from "../utils/utils.js";
 import { Canvas } from "./canvasux.js";
 import { undoRedo } from "../utils/undo.js";
+import { Items } from "../components/items.js";
 
 export function ReactApp(props: {
 	items: TreeView<typeof Items>;

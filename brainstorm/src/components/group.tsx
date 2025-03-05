@@ -24,7 +24,7 @@ export class Group
 	extends sf.objectRecursive("Group", {
 		...itemFields,
 		name: sf.string,
-		items: Items,
+		items: [() => Items],
 	})
 	implements Item
 {

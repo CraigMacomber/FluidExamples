@@ -9,7 +9,10 @@ import { ConnectableElement, useDrag, useDrop } from "react-dnd";
 import { DeleteButton } from "./buttonux.js";
 import { dragType } from "../utils/utils.js";
 import { Session } from "../schema/session_schema.js";
-import { Item, ItemsView } from "../components/items.js";
+import { ItemsView } from "../components/items.js";
+import { Items } from "../components/items.js";
+import { Note } from "../components/note.js";
+import { Group } from "../components/group.js";
 import { Tree } from "fluid-framework";
 
 export function GroupView(props: {
@@ -20,7 +23,9 @@ export function GroupView(props: {
 }): JSX.Element {
 	// copy the array of items from the group
 	// to force a re-render when the array changes
-	const [itemsArray, setItemsArray] = useState<Item[]>(props.group.items.map((item) => item));
+	const [itemsArray, setItemsArray] = useState<(Note | Group)[]>(
+		props.group.items.map((item) => item),
+	);
 	const [name, setName] = useState(props.group.name);
 
 	// Register for tree deltas when the component mounts.
@@ -120,7 +125,6 @@ export function GroupView(props: {
 					deletePile={props.group.delete}
 				/>
 				<ItemsView
-					config={props.config}
 					items={itemsArray}
 					parent={props.group.items}
 					clientId={props.clientId}

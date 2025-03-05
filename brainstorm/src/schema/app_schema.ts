@@ -4,7 +4,8 @@
  */
 
 import { TreeViewConfiguration } from "fluid-framework";
-import { ItemSchema, makeItems, MyAppComponent, MyAppConfigPartial } from "../components/items.js";
+import { Items } from "../components/items.js";
+import { ItemSchema, MyAppComponent, MyAppConfigPartial } from "../components/itemAbstractions.js";
 import { noteComponent } from "../components/note.js";
 import { groupComponent } from "../components/group.js";
 import { Component, evaluateLazySchema } from "fluid-framework/alpha";
@@ -36,7 +37,7 @@ export function composeComponents(allComponents: readonly MyAppComponent[]): MyA
 	);
 	const config: MyAppConfigPartial = {
 		allowedItemTypes: ItemTypes,
-		Items: makeItems(ItemTypes),
+		Items: Items,
 	};
 	const items = new Set(ItemTypes.map(evaluateLazySchema));
 	return { ...config, items };

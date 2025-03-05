@@ -5,7 +5,11 @@
 
 import { TreeViewConfiguration } from "fluid-framework";
 import { Items } from "../components/items.js";
-import type { ItemSchema, MyAppComponent, MyAppConfigPartial } from "../components/itemAbstractions.js";
+import type {
+	ItemSchema,
+	MyAppComponent,
+	MyAppConfigPartial,
+} from "../components/itemAbstractions.js";
 import { noteComponent } from "../components/note.js";
 import { groupComponent } from "../components/group.js";
 import { Component, evaluateLazySchema } from "fluid-framework/alpha";

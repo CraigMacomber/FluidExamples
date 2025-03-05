@@ -328,7 +328,7 @@ export const noteComponent: MyAppComponent = {
 										voted={props.note.votes.indexOf(props.clientId) > -1}
 										toggleVote={() => props.note.toggleVote(props.clientId)}
 										voteCount={noteVoteCount}
-										deleteNote={props.note.delete}
+										deleteNote={() => deleteItem(props.note, config)}
 									/>
 									<NoteTextArea
 										text={noteText}
@@ -354,7 +354,7 @@ export const noteComponent: MyAppComponent = {
 							return false;
 						},
 						drop: (item) => {
-							if (Tree.is(item, config.Items)) {
+							if (Tree.is(item, config.allowedItemTypes)) {
 								const parent = Tree.parent(item);
 								if (Tree.is(parent, config.Items)) {
 									const index = parent.indexOf(item);

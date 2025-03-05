@@ -12,264 +12,404 @@ import { useTransition } from "react-transition-state";
 import { SchemaFactory, Tree } from "fluid-framework";
 import { IconButton, MiniThumb, DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
-import { Items } from "./items.js";
-import { Group } from "./group.js";
+import { Item, itemFields, Items, ItemSchema, MyAppComponent } from "./items.js";
+import { Component } from "fluid-framework/alpha";
 
 const sf = new SchemaFactory("10d348df-90a9-4e2c-a45d-21ba6c66b799");
 
-// Define the schema for the note object.
-// Helper functions for working with the data contained in this object
-// are included in this class definition as methods.
-export class Note extends sf.object(
-	"Note",
-	// Fields for Notes which SharedTree will store and synchronize across clients.
-	// These fields are exposed as members of instances of the Note class.
-	{
-		/**
-		 * Id to make building the React app simpler.
-		 */
-		id: sf.string,
-		text: sf.string,
-		author: sf.string,
-		/**
-		 * Sequence of user ids to track which users have voted on this note.
-		 */
-		votes: sf.array(sf.string),
-		created: sf.number,
-		lastChanged: sf.number,
-	},
-) {
-	// Update the note text and also update the timestamp in the note
-	public readonly updateText = (text: string) => {
-		this.lastChanged = new Date().getTime();
-		this.text = text;
-	};
+// An example simple component
+export const noteComponent: MyAppComponent = {
+	itemTypes(lazyConfig): Component.LazyArray<ItemSchema> {
+		return [
+			() => {
+				const config = lazyConfig();
+				// Define the schema for the note object.
+				// Helper functions for working with the data contained in this object
+				// are included in this class definition as methods.
+				class Note
+					extends sf.object(
+						"Note",
+						// Fields for Notes which SharedTree will store and synchronize across clients.
+						// These fields are exposed as members of instances of the Note class.
+						{
+							...itemFields,
+							text: sf.string,
+							author: sf.string,
+							/**
+							 * Sequence of user ids to track which users have voted on this note.
+							 */
+							votes: sf.array(sf.string),
+							created: sf.number,
+							lastChanged: sf.number,
+						},
+					)
+					implements Item
+				{
+					// Update the note text and also update the timestamp in the note
+					public readonly updateText = (text: string) => {
+						this.lastChanged = new Date().getTime();
+						this.text = text;
+					};
 
-	public readonly toggleVote = (user: string) => {
-		const index = this.votes.indexOf(user);
-		if (index > -1) {
-			this.votes.removeAt(index);
-		} else {
-			this.votes.insertAtEnd(user);
-		}
+					public readonly toggleVote = (user: string) => {
+						const index = this.votes.indexOf(user);
+						if (index > -1) {
+							this.votes.removeAt(index);
+						} else {
+							this.votes.insertAtEnd(user);
+						}
 
-		this.lastChanged = new Date().getTime();
-	};
+						this.lastChanged = new Date().getTime();
+					};
 
-	/**
-	 * Removes a node from its parent {@link Items}.
-	 * If the note is not in an {@link Items}, it is left unchanged.
-	 */
-	public readonly delete = () => {
-		const parent = Tree.parent(this);
-		// Use type narrowing to ensure that parent is Items as expected for a note.
-		if (Tree.is(parent, Items)) {
-			const index = parent.indexOf(this);
-			parent.removeAt(index);
-		}
-	};
-}
+					public deleted() {}
 
-export function RootNoteWrapper(props: {
-	note: Note;
-	clientId: string;
-	session: Session;
-	fluidMembers: string[];
-}): JSX.Element {
-	return (
-		<div className="bg-transparent flex flex-col justify-center h-64">
-			<NoteView {...props} />
-		</div>
-	);
-}
-
-export function NoteView(props: {
-	note: Note;
-	clientId: string;
-	session: Session;
-	fluidMembers: string[];
-}): JSX.Element {
-	const mounted = useRef(false);
-
-	const [{ status }, toggle] = useTransition({
-		timeout: 1000,
-	});
-
-	const [selected, setSelected] = useState(false);
-	const [remoteSelected, setRemoteSelected] = useState(false);
-	const [bgColor, setBgColor] = useState("bg-yellow-100");
-	const [rotation] = useState(getRotation(props.note));
-	const [invalSelection, setInvalSelection] = useState(0);
-	const [noteText, setNoteText] = useState(props.note.text);
-	const [noteVoteCount, setNoteVoteCount] = useState(props.note.votes.length);
-
-	const parent = Tree.parent(props.note);
-	if (parent === undefined || !Tree.is(parent, Items)) {
-		return <></>;
-	}
-
-	const testSelection = (
-		note: Note,
-		session: Session,
-		clientId: string,
-		fluidMembers: string[],
-	) => {
-		const result = testRemoteNoteSelection(note, session, clientId, fluidMembers);
-		setSelected(result.selected);
-		setRemoteSelected(result.remoteSelected);
-	};
-
-	const updateSelection = (action: selectAction) => {
-		updateRemoteNoteSelection(props.note, action, props.session, props.clientId);
-	};
-
-	// Register for tree deltas when the component mounts.
-	// Any time the selection changes, the app will update
-	// We are using the treeChanged event because we are listening for all
-	// changes in the session tree.
-	useEffect(() => {
-		// Returns the cleanup function to be invoked when the component unmounts.
-		const unsubscribe = Tree.on(props.session, "treeChanged", () => {
-			setInvalSelection(invalSelection + Math.random());
-		});
-		return unsubscribe;
-	}, []);
-
-	useEffect(() => {
-		testSelection(props.note, props.session, props.clientId, props.fluidMembers);
-	}, [invalSelection]);
-
-	// Register for tree deltas when the component mounts.
-	// Any time the node changes, the app will update
-	useEffect(() => {
-		// Returns the cleanup function to be invoked when the component unmounts.
-		const unsubscribe = Tree.on(props.note, "nodeChanged", () => {
-			setNoteText(props.note.text);
-			setNoteVoteCount(props.note.votes.length);
-		});
-		return unsubscribe;
-	}, []);
-
-	useEffect(() => {
-		testSelection(props.note, props.session, props.clientId, props.fluidMembers);
-	}, [props.fluidMembers]);
-
-	useEffect(() => {
-		mounted.current = true;
-		testSelection(props.note, props.session, props.clientId, props.fluidMembers);
-
-		return () => {
-			mounted.current = false;
-		};
-	}, []);
-
-	useEffect(() => {
-		if (selected) {
-			setBgColor("bg-yellow-400");
-		} else {
-			setBgColor("bg-yellow-100");
-		}
-	}, [selected]);
-
-	toggle(false);
-
-	useEffect(() => {
-		toggle(true);
-	}, [Tree.parent(props.note)]);
-
-	useEffect(() => {
-		if (mounted.current) {
-			toggle(true);
-		}
-	}, [props.note.text]);
-
-	const [{ isDragging }, drag] = useDrag(() => ({
-		type: dragType.NOTE,
-		item: props.note,
-		collect: (monitor) => ({
-			isDragging: monitor.isDragging(),
-		}),
-	}));
-
-	const [{ isOver, canDrop }, drop] = useDrop(() => ({
-		accept: [dragType.NOTE, dragType.GROUP],
-		collect: (monitor) => ({
-			isOver: !!monitor.isOver(),
-			canDrop: !!monitor.canDrop(),
-		}),
-		canDrop: (item) => {
-			if (Tree.is(item, Note)) return true;
-			if (Tree.is(item, Group) && !Tree.contains(item, parent)) return true;
-			return false;
-		},
-		drop: (item) => {
-			if (Tree.is(item, Group) || Tree.is(item, Note)) {
-				moveItem(item, parent.indexOf(props.note), parent);
-			}
-			return;
-		},
-	}));
-
-	const attachRef = (el: ConnectableElement) => {
-		drag(el);
-		drop(el);
-	};
-
-	const handleClick = (e: React.MouseEvent) => {
-		e.stopPropagation();
-		if (selected) {
-			updateSelection(selectAction.REMOVE);
-		} else if (e.shiftKey || e.ctrlKey) {
-			updateSelection(selectAction.MULTI);
-		} else {
-			updateSelection(selectAction.SINGLE);
-		}
-	};
-
-	return (
-		<div
-			onClick={(e) => handleClick(e)}
-			className={`transition duration-500${
-				status === "exiting" ? " transform ease-out scale-110" : ""
-			}`}
-		>
-			<div
-				ref={attachRef}
-				className={
-					isOver && canDrop
-						? "border-l-4 border-dashed border-gray-500"
-						: "border-l-4 border-dashed border-transparent"
-				}
-			>
-				<div
-					style={{ opacity: isDragging ? 0.5 : 1 }}
-					className={
-						"relative transition-all flex flex-col " +
-						bgColor +
-						" h-48 w-48 shadow-md hover:shadow-lg hover:rotate-0 p-2 " +
-						rotation +
-						" " +
-						(isOver && canDrop ? "translate-x-3" : "")
+					public static readonly description = "Note";
+					public static default(author: string = "unknown"): Note {
+						const timeStamp = new Date().getTime();
+						return new Note({
+							text: "",
+							author,
+							votes: [],
+							created: timeStamp,
+							lastChanged: timeStamp,
+						});
 					}
-					aria-label="Note"
-				>
-					<NoteToolbar
-						voted={props.note.votes.indexOf(props.clientId) > -1}
-						toggleVote={() => props.note.toggleVote(props.clientId)}
-						voteCount={noteVoteCount}
-						deleteNote={props.note.delete}
-					/>
-					<NoteTextArea
-						text={noteText}
-						update={props.note.updateText}
-						select={updateSelection}
-					/>
-					<NoteSelection show={remoteSelected} />
-				</div>
-			</div>
-		</div>
-	);
-}
+					public static AddButton(props: {
+						target: Items;
+						clientId: string;
+					}): JSX.Element {
+						return AddNoteButton(props);
+					}
+					public View(props: {
+						clientId: string;
+						session: Session;
+						fluidMembers: string[];
+					}): JSX.Element {
+						const parent = Tree.parent(this);
+						const isRoot = parent === undefined || Tree.parent(parent) === undefined;
+
+						if (isRoot) {
+							return (
+								<RootNoteWrapper
+									key={this.id}
+									note={this}
+									clientId={props.clientId}
+									session={props.session}
+									fluidMembers={props.fluidMembers}
+								/>
+							);
+						} else {
+							return (
+								<NoteView
+									key={this.id}
+									note={this}
+									clientId={props.clientId}
+									session={props.session}
+									fluidMembers={props.fluidMembers}
+								/>
+							);
+						}
+					}
+				}
+
+				function RootNoteWrapper(props: {
+					note: Note;
+					clientId: string;
+					session: Session;
+					fluidMembers: string[];
+				}): JSX.Element {
+					return (
+						<div className="bg-transparent flex flex-col justify-center h-64">
+							<NoteView {...props} />
+						</div>
+					);
+				}
+
+				function NoteView(props: {
+					note: Note;
+					clientId: string;
+					session: Session;
+					fluidMembers: string[];
+				}): JSX.Element {
+					const mounted = useRef(false);
+
+					const [{ status }, toggle] = useTransition({
+						timeout: 1000,
+					});
+
+					const [selected, setSelected] = useState(false);
+					const [remoteSelected, setRemoteSelected] = useState(false);
+					const [bgColor, setBgColor] = useState("bg-yellow-100");
+					const [rotation] = useState(getRotation(props.note));
+					const [invalSelection, setInvalSelection] = useState(0);
+					const [noteText, setNoteText] = useState(props.note.text);
+					const [noteVoteCount, setNoteVoteCount] = useState(props.note.votes.length);
+
+					const parent = Tree.parent(props.note);
+					if (parent === undefined || !Tree.is(parent, config.Items)) {
+						return <></>;
+					}
+
+					const testSelection = (
+						note: Note,
+						session: Session,
+						clientId: string,
+						fluidMembers: string[],
+					) => {
+						const result = testRemoteNoteSelection(
+							note,
+							session,
+							clientId,
+							fluidMembers,
+						);
+						setSelected(result.selected);
+						setRemoteSelected(result.remoteSelected);
+					};
+
+					const updateSelection = (action: selectAction) => {
+						updateRemoteNoteSelection(
+							props.note,
+							action,
+							props.session,
+							props.clientId,
+						);
+					};
+
+					// Register for tree deltas when the component mounts.
+					// Any time the selection changes, the app will update
+					// We are using the treeChanged event because we are listening for all
+					// changes in the session tree.
+					useEffect(() => {
+						// Returns the cleanup function to be invoked when the component unmounts.
+						const unsubscribe = Tree.on(props.session, "treeChanged", () => {
+							setInvalSelection(invalSelection + Math.random());
+						});
+						return unsubscribe;
+					}, []);
+
+					useEffect(() => {
+						testSelection(
+							props.note,
+							props.session,
+							props.clientId,
+							props.fluidMembers,
+						);
+					}, [invalSelection]);
+
+					// Register for tree deltas when the component mounts.
+					// Any time the node changes, the app will update
+					useEffect(() => {
+						// Returns the cleanup function to be invoked when the component unmounts.
+						const unsubscribe = Tree.on(props.note, "nodeChanged", () => {
+							setNoteText(props.note.text);
+							setNoteVoteCount(props.note.votes.length);
+						});
+						return unsubscribe;
+					}, []);
+
+					useEffect(() => {
+						testSelection(
+							props.note,
+							props.session,
+							props.clientId,
+							props.fluidMembers,
+						);
+					}, [props.fluidMembers]);
+
+					useEffect(() => {
+						mounted.current = true;
+						testSelection(
+							props.note,
+							props.session,
+							props.clientId,
+							props.fluidMembers,
+						);
+
+						return () => {
+							mounted.current = false;
+						};
+					}, []);
+
+					useEffect(() => {
+						if (selected) {
+							setBgColor("bg-yellow-400");
+						} else {
+							setBgColor("bg-yellow-100");
+						}
+					}, [selected]);
+
+					toggle(false);
+
+					useEffect(() => {
+						toggle(true);
+					}, [Tree.parent(props.note)]);
+
+					useEffect(() => {
+						if (mounted.current) {
+							toggle(true);
+						}
+					}, [props.note.text]);
+
+					const [{ isDragging }, drag] = useDrag(() => ({
+						type: dragType.NOTE,
+						item: props.note,
+						collect: (monitor) => ({
+							isDragging: monitor.isDragging(),
+						}),
+					}));
+
+					const [{ isOver, canDrop }, drop] = useDrop(() => ({
+						accept: [dragType.NOTE, dragType.GROUP],
+						collect: (monitor) => ({
+							isOver: !!monitor.isOver(),
+							canDrop: !!monitor.canDrop(),
+						}),
+						canDrop: (item) => {
+							if (
+								Tree.is(item, config.allowedItemTypes) &&
+								!Tree.contains(item, parent)
+							)
+								return true;
+							return false;
+						},
+						drop: (item) => {
+							if (Tree.is(item, config.allowedItemTypes)) {
+								moveItem(item, parent.indexOf(props.note), parent);
+							}
+							return;
+						},
+					}));
+
+					const attachRef = (el: ConnectableElement) => {
+						drag(el);
+						drop(el);
+					};
+
+					const handleClick = (e: React.MouseEvent) => {
+						e.stopPropagation();
+						if (selected) {
+							updateSelection(selectAction.REMOVE);
+						} else if (e.shiftKey || e.ctrlKey) {
+							updateSelection(selectAction.MULTI);
+						} else {
+							updateSelection(selectAction.SINGLE);
+						}
+					};
+
+					return (
+						<div
+							onClick={(e) => handleClick(e)}
+							className={`transition duration-500${
+								status === "exiting" ? " transform ease-out scale-110" : ""
+							}`}
+						>
+							<div
+								ref={attachRef}
+								className={
+									isOver && canDrop
+										? "border-l-4 border-dashed border-gray-500"
+										: "border-l-4 border-dashed border-transparent"
+								}
+							>
+								<div
+									style={{ opacity: isDragging ? 0.5 : 1 }}
+									className={
+										"relative transition-all flex flex-col " +
+										bgColor +
+										" h-48 w-48 shadow-md hover:shadow-lg hover:rotate-0 p-2 " +
+										rotation +
+										" " +
+										(isOver && canDrop ? "translate-x-3" : "")
+									}
+									aria-label="Note"
+								>
+									<NoteToolbar
+										voted={props.note.votes.indexOf(props.clientId) > -1}
+										toggleVote={() => props.note.toggleVote(props.clientId)}
+										voteCount={noteVoteCount}
+										deleteNote={props.note.delete}
+									/>
+									<NoteTextArea
+										text={noteText}
+										update={props.note.updateText}
+										select={updateSelection}
+									/>
+									<NoteSelection show={remoteSelected} />
+								</div>
+							</div>
+						</div>
+					);
+				}
+
+				function AddNoteButton(props: { target: Items; clientId: string }): JSX.Element {
+					const [{ isActive }, drop] = useDrop(() => ({
+						accept: [dragType.NOTE, dragType.GROUP],
+						collect: (monitor) => ({
+							isActive: monitor.canDrop() && monitor.isOver(),
+						}),
+						canDrop: (item) => {
+							if (Tree.is(item, config.Items) && !Tree.contains(item, props.target))
+								return true;
+							return false;
+						},
+						drop: (item) => {
+							if (Tree.is(item, config.Items)) {
+								const parent = Tree.parent(item);
+								if (Tree.is(parent, config.Items)) {
+									const index = parent.indexOf(item);
+									props.target.moveToEnd(index, parent);
+								}
+							}
+							return;
+						},
+					}));
+
+					let size = "h-48 w-48";
+					let buttonText = "Add Note";
+					if (props.target.length > 0) {
+						buttonText = "+";
+						size = "h-48";
+					}
+
+					const handleClick = (e: React.MouseEvent) => {
+						e.stopPropagation();
+						props.target.addNode(props.clientId);
+					};
+
+					const hoverEffectStyle = "absolute top-0 left-0 border-l-4 border-dashed h-48 ";
+
+					return (
+						<div className="relative transition-all">
+							<div
+								className={
+									isActive
+										? hoverEffectStyle + "border-gray-500"
+										: hoverEffectStyle + "border-transparent"
+								}
+							></div>
+							<div
+								ref={drop as unknown as RefObject<HTMLDivElement>}
+								className={
+									"transition-all text-2xl place-content-center font-bold flex flex-col text-center cursor-pointer bg-transparent border-white border-dashed border-8 " +
+									size +
+									" p-4 hover:border-black" +
+									" " +
+									(isActive ? "translate-x-3" : "")
+								}
+								onClick={(e) => handleClick(e)}
+							>
+								{buttonText}
+							</div>
+						</div>
+					);
+				}
+
+				return Note;
+			},
+		];
+	},
+};
 
 function NoteSelection(props: { show: boolean }): JSX.Element {
 	if (props.show) {
@@ -320,69 +460,6 @@ function NoteToolbar(props: {
 		<div className="flex justify-between z-50">
 			<LikeButton {...props} />
 			<DeleteNoteButton {...props} />
-		</div>
-	);
-}
-
-export function AddNoteButton(props: { target: Items; clientId: string }): JSX.Element {
-	const [{ isActive }, drop] = useDrop(() => ({
-		accept: [dragType.NOTE, dragType.GROUP],
-		collect: (monitor) => ({
-			isActive: monitor.canDrop() && monitor.isOver(),
-		}),
-		canDrop: (item) => {
-			if (Tree.is(item, Note)) return true;
-			if (Tree.is(item, Group) && !Tree.contains(item, props.target)) return true;
-			return false;
-		},
-		drop: (item) => {
-			if (Tree.is(item, Note) || Tree.is(item, Group)) {
-				const parent = Tree.parent(item);
-				if (Tree.is(parent, Items)) {
-					const index = parent.indexOf(item);
-					props.target.moveToEnd(index, parent);
-				}
-			}
-			return;
-		},
-	}));
-
-	let size = "h-48 w-48";
-	let buttonText = "Add Note";
-	if (props.target.length > 0) {
-		buttonText = "+";
-		size = "h-48";
-	}
-
-	const handleClick = (e: React.MouseEvent) => {
-		e.stopPropagation();
-		props.target.addNode(props.clientId);
-	};
-
-	const hoverEffectStyle = "absolute top-0 left-0 border-l-4 border-dashed h-48 ";
-
-	return (
-		<div className="relative transition-all">
-			<div
-				className={
-					isActive
-						? hoverEffectStyle + "border-gray-500"
-						: hoverEffectStyle + "border-transparent"
-				}
-			></div>
-			<div
-				ref={drop as unknown as RefObject<HTMLDivElement>}
-				className={
-					"transition-all text-2xl place-content-center font-bold flex flex-col text-center cursor-pointer bg-transparent border-white border-dashed border-8 " +
-					size +
-					" p-4 hover:border-black" +
-					" " +
-					(isActive ? "translate-x-3" : "")
-				}
-				onClick={(e) => handleClick(e)}
-			>
-				{buttonText}
-			</div>
 		</div>
 	);
 }

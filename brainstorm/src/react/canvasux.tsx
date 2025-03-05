@@ -24,12 +24,11 @@ import {
 } from "./buttonux.js";
 import { undefinedUserId } from "../utils/utils.js";
 import { undoRedo } from "../utils/undo.js";
-import { Items, ItemsView } from "../components/items.js";
-import { Note } from "../components/note.js";
-import { Group } from "../components/group.js";
+import { Item, ItemsSchema, ItemsView } from "../components/items.js";
+import { appConfig } from "../schema/app_schema.js";
 
 export function Canvas(props: {
-	items: TreeView<typeof Items>;
+	items: TreeView<ItemsSchema>;
 	sessionTree: TreeView<typeof Session>;
 	audience: IServiceAudience<IMember>;
 	container: IFluidContainer;
@@ -41,9 +40,7 @@ export function Canvas(props: {
 	setSaved: (arg: boolean) => void;
 	setFluidMembers: (arg: string[]) => void;
 }): JSX.Element {
-	const [itemsArray, setItemsArray] = useState<(Note | Group)[]>(
-		props.items.root.map((item) => item),
-	);
+	const [itemsArray, setItemsArray] = useState<Item[]>(props.items.root.map((item) => item));
 
 	// Register for tree deltas when the component mounts.
 	// Any time the items array changes, the app will update.
@@ -100,6 +97,7 @@ export function Canvas(props: {
 	return (
 		<div className="relative flex grow-0 h-full w-full bg-transparent">
 			<ItemsView
+				config={appConfig}
 				items={itemsArray}
 				parent={props.items.root}
 				clientId={props.currentUser}

@@ -60,7 +60,13 @@ export type Item = TreeNode &
 export interface ItemStatic {
 	readonly description: string;
 	default(): Unhydrated<Item>;
-	AddButton(props: { target: Items; clientId: string }): JSX.Element;
+	/**
+	 * Function to create a button which adds this item type to the target.
+	 * @param props - The target to add the item to.
+	 *
+	 * TODO: currently this is not required, but it could be.
+	 */
+	AddButton?(props: { target: Items; clientId: string }): JSX.Element;
 }
 
 /**

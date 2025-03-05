@@ -6,9 +6,9 @@
 
 // Include a UUID to guarantee that this schema will be uniquely identifiable.
 
-import { SchemaFactory, Tree, ValidateRecursiveSchema } from "fluid-framework";
+import { SchemaFactory, Tree } from "fluid-framework";
 import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions.js";
-import { Items, ItemsView } from "./items.js";
+import { itemAllowedTypes, Items, ItemsView } from "./items.js";
 import React, { JSX, useEffect, useState } from "react";
 import { dragType } from "../utils/utils.js";
 import { ConnectableElement, useDrag, useDrop } from "react-dnd";
@@ -22,7 +22,7 @@ const sf = new SchemaFactory("d3872080-b9bd-4315-a210-0dda4fedcb18");
 
 // Define the schema for the container of notes.
 export class Group
-	extends sf.objectRecursive("Group", {
+	extends sf.object("Group", {
 		...itemFields,
 		name: sf.string,
 		items: [() => Items],
@@ -31,10 +31,6 @@ export class Group
 {
 	public static readonly description = "Group";
 	public static default(): Group {
-		throw new Error("Not implemented");
-	}
-
-	public static AddButton(props: { target: Items; clientId: string }): JSX.Element {
 		throw new Error("Not implemented");
 	}
 
@@ -76,11 +72,6 @@ export class Group
 			});
 		}
 	};
-}
-
-{
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	type _check = ValidateRecursiveSchema<typeof Group>;
 }
 
 export function GroupView(props: {
@@ -134,11 +125,7 @@ export function GroupView(props: {
 			isOver: !!monitor.isOver({ shallow: true }),
 			canDrop: !!monitor.canDrop(),
 		}),
-		canDrop: (item) => {
-			if (Tree.is(item, Note)) return true;
-			if (Tree.is(item, Group) && !Tree.contains(item, parent)) return true;
-			return false;
-		},
+		canDrop: (item) => Tree.is(item, itemAllowedTypes) && !Tree.contains(item, parent),
 		drop: (item, monitor) => {
 			const didDrop = monitor.didDrop();
 			if (didDrop) {

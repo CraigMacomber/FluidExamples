@@ -3,52 +3,69 @@
  * Licensed under the MIT License.
  */
 
-import { customizeSchemaTyping, SchemaFactory, Tree } from "fluid-framework/alpha";
+import {
+	Component,
+	customizeSchemaTyping,
+	evaluateLazySchema,
+	NodeFromSchema,
+	SchemaFactory,
+	Tree,
+} from "fluid-framework/alpha";
 import { Session } from "../schema/session_schema.js";
 import { Group, GroupView } from "./group.js";
-import { AddNoteButton, Note, NoteView, RootNoteWrapper } from "./note.js";
+import { Note, NoteView, RootNoteWrapper } from "./note.js";
 import React, { JSX } from "react";
 import { v4 as uuid } from "uuid";
-import { Item } from "./itemAbstractions.js";
+import { Item, ItemSchema } from "./itemAbstractions.js";
 
 const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
 
-// Schema for a list of Notes and Groups.
-export class Items extends sf.array(
-	"Items",
-	customizeSchemaTyping([() => Group, () => Note]).simplifiedUnrestricted<Item>(),
-) {
-	public readonly addNode = (author: string) => {
-		const timeStamp = new Date().getTime();
+function makeItems(items: Component.LazyArray<ItemSchema>) {
+	// Schema for a list of Notes and Groups.
+	return class Items extends sf.array(
+		"Items",
+		customizeSchemaTyping(items).simplifiedUnrestricted<Item>(),
+	) {
+		public readonly addNode = (author: string) => {
+			const timeStamp = new Date().getTime();
 
-		// Define the note to add to the SharedTree - this must conform to
-		// the schema definition of a note
-		const newNote = new Note({
-			text: "",
-			author,
-			votes: [],
-			created: timeStamp,
-			lastChanged: timeStamp,
-		});
+			// Define the note to add to the SharedTree - this must conform to
+			// the schema definition of a note
+			const newNote = new Note({
+				text: "",
+				author,
+				votes: [],
+				created: timeStamp,
+				lastChanged: timeStamp,
+			});
 
-		// Insert the note into the SharedTree.
-		this.insertAtEnd(newNote);
-	};
+			// Insert the note into the SharedTree.
+			this.insertAtEnd(newNote);
+		};
 
-	/**
-	 * Add a new group (container for notes) to the SharedTree.
-	 */
-	public readonly addGroup = (name: string): Group => {
-		const group = new Group({
-			id: uuid(),
-			name,
-			items: new Items([]),
-		});
+		/**
+		 * Add a new group (container for notes) to the SharedTree.
+		 */
+		public readonly addGroup = (name: string): Group => {
+			const group = new Group({
+				id: uuid(),
+				name,
+				items: new Items([]),
+			});
 
-		this.insertAtEnd(group);
-		return group;
+			this.insertAtEnd(group);
+			return group;
+		};
 	};
 }
+
+export type Items = NodeFromSchema<ReturnType<typeof makeItems>>;
+
+// Below here in this file, there are dependencies on the concrete set of Item types.
+
+export const itemAllowedTypes: Component.LazyArray<ItemSchema> = [() => Group, () => Note];
+
+export const Items = makeItems(itemAllowedTypes);
 
 export function ItemsView(props: {
 	items: Item[];
@@ -61,6 +78,7 @@ export function ItemsView(props: {
 
 	const pilesArray: JSX.Element[] = [];
 	for (const i of props.items) {
+		// TODO: instead of explicitly handling each item type here, this should use the Item interface's View method
 		if (Tree.is(i, Group)) {
 			pilesArray.push(
 				<GroupView
@@ -104,9 +122,15 @@ export function ItemsView(props: {
 			</div>
 		);
 	} else {
-		pilesArray.push(
-			<AddNoteButton key="newNote" target={props.parent} clientId={props.clientId} />,
-		);
+		const kinds = itemAllowedTypes.map(evaluateLazySchema);
+		for (const kind of kinds) {
+			if (kind.AddButton !== undefined) {
+				// TODO: use key?
+				// const key = `new${kind.description}`;
+				pilesArray.push(<kind.AddButton target={props.parent} clientId={props.clientId} />);
+			}
+		}
+
 		return <div className="flex flex-row flex-wrap gap-8 p-2">{pilesArray}</div>;
 	}
 }

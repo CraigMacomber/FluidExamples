@@ -34,7 +34,12 @@ export type ItemsSchema = typeof Items;
  * Properties all item types must implement.
  */
 export interface ItemExtensions {
-	View(props: { clientId: string; session: Session; fluidMembers: string[] }): JSX.Element;
+	View(props: {
+		schema: Item;
+		clientId: string;
+		session: Session;
+		fluidMembers: string[];
+	}): JSX.Element;
 
 	/**
 	 * When deleting this item, it gets replaced by the returned items.

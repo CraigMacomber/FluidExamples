@@ -12,8 +12,8 @@ import {
 	Tree,
 } from "fluid-framework/alpha";
 import { Session } from "../schema/session_schema.js";
-import { Group, GroupView } from "./group.js";
-import { Note, NoteView, RootNoteWrapper } from "./note.js";
+import { Group } from "./group.js";
+import { Note, RootNoteWrapper } from "./note.js";
 import React, { JSX } from "react";
 import { v4 as uuid } from "uuid";
 import { Item, ItemSchema } from "./itemAbstractions.js";
@@ -80,10 +80,10 @@ export function ItemsView(props: {
 	for (const i of props.items) {
 		// TODO: instead of explicitly handling each item type here, this should use the Item interface's View method
 		if (Tree.is(i, Group)) {
+			const View = i.View;
 			pilesArray.push(
-				<GroupView
-					key={i.id}
-					group={i}
+				<View
+					schema={i}
 					clientId={props.clientId}
 					session={props.session}
 					fluidMembers={props.fluidMembers}
@@ -101,10 +101,11 @@ export function ItemsView(props: {
 					/>,
 				);
 			} else {
+				// NoteView
+				const View = i.View;
 				pilesArray.push(
-					<NoteView
-						key={i.id}
-						note={i}
+					<View
+						schema={i}
 						clientId={props.clientId}
 						session={props.session}
 						fluidMembers={props.fluidMembers}

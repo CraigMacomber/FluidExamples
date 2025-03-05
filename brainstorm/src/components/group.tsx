@@ -42,11 +42,12 @@ export class Group
 	}
 
 	public View(props: {
+		schema: Item;
 		clientId: string;
 		session: Session;
 		fluidMembers: string[];
 	}): JSX.Element {
-		throw new Error("Not implemented");
+		return <GroupView group={props.schema as unknown as Group} {...props} />;
 	}
 
 	/**

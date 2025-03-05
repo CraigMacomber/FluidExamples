@@ -43,12 +43,14 @@ export class Note
 	implements Item
 {
 	public View(props: {
+		schema: Item;
 		clientId: string;
 		session: Session;
 		fluidMembers: string[];
 	}): JSX.Element {
-		throw new Error("Method not implemented.");
+		return <NoteView note={props.schema as unknown as Note} {...props} />;
 	}
+
 	public deleted(): void {}
 
 	public static readonly description = "Note";

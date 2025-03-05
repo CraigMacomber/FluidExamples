@@ -19,6 +19,8 @@ import { getSelectedNotes } from "../utils/session_helpers.js";
 import { Tree } from "fluid-framework";
 import { Note } from "../components/note.js";
 import { Items } from "../components/items.js";
+import { Group } from "../components/group.js";
+import { ItemSchema } from "../components/itemAbstractions.js";
 
 export function NewGroupButton(props: {
 	items: Items;
@@ -31,7 +33,8 @@ export function NewGroupButton(props: {
 		// multiple notes into the group and we want to ensure that the operation is atomic.
 		// This ensures that the revertible of the operation will undo all the changes made by the operation.
 		Tree.runTransaction(props.items, () => {
-			const group = props.items.addGroup("[new group]");
+			const group = Group.default(props.clientId);
+			props.items.insertAtEnd(group);
 			const ids = getSelectedNotes(props.session, props.clientId);
 			for (const id of ids) {
 				const n = findNote(props.items, id);
@@ -53,10 +56,15 @@ export function NewGroupButton(props: {
 	);
 }
 
-export function NewNoteButton(props: { items: Items; clientId: string }): JSX.Element {
+function NewItemButton(props: {
+	Item: ItemSchema;
+	items: Items;
+	clientId: string;
+	icon: JSX.Element;
+}): JSX.Element {
 	const handleClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
-		props.items.addNode(props.clientId);
+		props.items.insertAtEnd(props.Item.default(props.clientId));
 	};
 
 	return (
@@ -64,11 +72,15 @@ export function NewNoteButton(props: { items: Items; clientId: string }): JSX.El
 			color="white"
 			background="black"
 			handleClick={(e: React.MouseEvent) => handleClick(e)}
-			icon={<NoteRegular />}
+			icon={props.icon}
 		>
-			Add Note
+			Add {props.Item.description}
 		</IconButton>
 	);
+}
+
+export function NewNoteButton(props: { items: Items; clientId: string }): JSX.Element {
+	return NewItemButton({ ...props, Item: Note, icon: <NoteRegular /> });
 }
 
 export function DeleteNotesButton(props: {

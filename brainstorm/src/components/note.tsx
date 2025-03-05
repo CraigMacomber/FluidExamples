@@ -54,7 +54,7 @@ export class Note
 	public deleted(): void {}
 
 	public static readonly description = "Note";
-	public static default(author: string = "unknown"): Note {
+	public static default(author: string): Note {
 		const timeStamp = new Date().getTime();
 		return new Note({
 			text: "",
@@ -377,7 +377,7 @@ function AddNoteButton(props: { target: Items; clientId: string }): JSX.Element 
 
 	const handleClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
-		props.target.addNode(props.clientId);
+		props.target.insertAtEnd(Note.default(props.clientId));
 	};
 
 	const hoverEffectStyle = "absolute top-0 left-0 border-l-4 border-dashed h-48 ";

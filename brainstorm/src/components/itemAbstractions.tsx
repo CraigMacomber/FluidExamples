@@ -64,7 +64,7 @@ export type Item = TreeNode &
  */
 export interface ItemStatic {
 	readonly description: string;
-	default(): Unhydrated<Item>;
+	default(author: string): Unhydrated<Item>;
 	/**
 	 * Function to create a button which adds this item type to the target.
 	 * @param props - The target to add the item to.

@@ -12,7 +12,7 @@ import {
 	NodeKind,
 	TreeNodeSchema,
 } from "fluid-framework/alpha";
-import { Session } from "../schema/session_schema.js";
+import type { Session } from "../schema/session_schema.js";
 import { JSX } from "react";
 import type { Items } from "./items.js";
 

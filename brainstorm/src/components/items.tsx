@@ -13,7 +13,7 @@ import { v4 as uuid } from "uuid";
 const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
 
 // Schema for a list of Notes and Groups.
-export class Items extends sf.arrayRecursive("Items", [() => Group, Note]) {
+export class Items extends sf.arrayRecursive("Items", [() => Group, () => Note]) {
 	public readonly addNode = (author: string) => {
 		const timeStamp = new Date().getTime();
 

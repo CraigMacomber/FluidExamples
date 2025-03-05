@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Item } from "../components/itemAbstractions.js";
+import type { Item } from "../components/itemAbstractions.js";
 
 export const undefinedUserId = "[UNDEFINED]";
 

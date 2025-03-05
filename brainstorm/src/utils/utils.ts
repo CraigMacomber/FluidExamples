@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Note } from "../components/note.js";
+import { Item } from "../components/itemAbstractions.js";
 
 export const undefinedUserId = "[UNDEFINED]";
 
-export function getRotation(note: Note) {
+export function getRotation(note: Item) {
 	const i = hashCode(note.id);
 
 	const rotationArray = [

@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, Tree, ValidateRecursiveSchema } from "fluid-framework";
+import { SchemaFactory, Tree, ValidateRecursiveSchema } from "fluid-framework/alpha";
 import { Session } from "../schema/session_schema.js";
 import { Group, GroupView } from "./group.js";
 import { AddNoteButton, Note, NoteView, RootNoteWrapper } from "./note.js";
 import React, { JSX } from "react";
 import { v4 as uuid } from "uuid";
 
-// As this schema uses a recursive type, the beta SchemaFactoryRecursive is used instead of just SchemaFactory.
 const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
 
 // Schema for a list of Notes and Groups.
@@ -21,7 +20,6 @@ export class Items extends sf.arrayRecursive("Items", [() => Group, Note]) {
 		// Define the note to add to the SharedTree - this must conform to
 		// the schema definition of a note
 		const newNote = new Note({
-			id: uuid(),
 			text: "",
 			author,
 			votes: [],
@@ -65,7 +63,7 @@ export function ItemsView(props: {
 }): JSX.Element {
 	const isRoot = Tree.parent(props.parent) === undefined;
 
-	const pilesArray = [];
+	const pilesArray: JSX.Element[] = [];
 	for (const i of props.items) {
 		if (Tree.is(i, Group)) {
 			pilesArray.push(

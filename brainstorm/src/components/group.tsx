@@ -6,6 +6,7 @@
 // Include a UUID to guarantee that this schema will be uniquely identifiable.
 
 import { SchemaFactory, Tree, ValidateRecursiveSchema } from "fluid-framework";
+import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions.js";
 import { Items, ItemsView } from "./items.js";
 import React, { JSX, useEffect, useState } from "react";
 import { dragType } from "../utils/utils.js";
@@ -14,16 +15,43 @@ import { moveItem } from "../utils/app_helpers.js";
 import { DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
 import { Note } from "./note.js";
+import { Component } from "fluid-framework/alpha";
 
-// As this schema uses a recursive type, the beta SchemaFactoryRecursive is used instead of just SchemaFactory.
 const sf = new SchemaFactory("d3872080-b9bd-4315-a210-0dda4fedcb18");
 
 // Define the schema for the container of notes.
-export class Group extends sf.objectRecursive("Group", {
-	id: sf.string,
-	name: sf.string,
-	items: Items,
-}) {
+export class Group
+	extends sf.objectRecursive("Group", {
+		...itemFields,
+		name: sf.string,
+		items: Items,
+	})
+	implements Item
+{
+	public static readonly description = "Group";
+	public static default(): Group {
+		throw new Error("Not implemented");
+	}
+
+	public static AddButton(props: { target: Items; clientId: string }): JSX.Element {
+		throw new Error("Not implemented");
+	}
+
+	public deleted(oldParent: Items, oldIndex: number): void {
+		// Move the children of the group to the parent
+		if (this.items.length !== 0) {
+			oldParent.moveRangeToIndex(oldIndex, 0, this.items.length, this.items);
+		}
+	}
+
+	public View(props: {
+		clientId: string;
+		session: Session;
+		fluidMembers: string[];
+	}): JSX.Element {
+		throw new Error("Not implemented");
+	}
+
 	/**
 	 * Removes a group from its parent {@link Items}.
 	 * If the note is not in an {@link Items}, it is left unchanged.
@@ -202,3 +230,9 @@ function GroupToolbar(props: {
 export function DeletePileButton(props: { deletePile: () => void }): JSX.Element {
 	return <DeleteButton handleClick={() => props.deletePile()}></DeleteButton>;
 }
+
+export const groupComponent: MyAppComponent = {
+	itemTypes(): Component.LazyArray<ItemSchema> {
+		return [() => Group];
+	},
+};

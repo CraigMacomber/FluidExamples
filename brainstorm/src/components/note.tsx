@@ -12,33 +12,59 @@ import { useTransition } from "react-transition-state";
 import { SchemaFactory, Tree } from "fluid-framework";
 import { IconButton, MiniThumb, DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
+import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions.js";
 import { Items } from "./items.js";
 import { Group } from "./group.js";
+import { Component } from "fluid-framework/alpha";
 
 const sf = new SchemaFactory("10d348df-90a9-4e2c-a45d-21ba6c66b799");
 
 // Define the schema for the note object.
 // Helper functions for working with the data contained in this object
 // are included in this class definition as methods.
-export class Note extends sf.object(
-	"Note",
-	// Fields for Notes which SharedTree will store and synchronize across clients.
-	// These fields are exposed as members of instances of the Note class.
-	{
-		/**
-		 * Id to make building the React app simpler.
-		 */
-		id: sf.string,
-		text: sf.string,
-		author: sf.string,
-		/**
-		 * Sequence of user ids to track which users have voted on this note.
-		 */
-		votes: sf.array(sf.string),
-		created: sf.number,
-		lastChanged: sf.number,
-	},
-) {
+export class Note
+	extends sf.object(
+		"Note",
+		// Fields for Notes which SharedTree will store and synchronize across clients.
+		// These fields are exposed as members of instances of the Note class.
+		{
+			...itemFields,
+			text: sf.string,
+			author: sf.string,
+			/**
+			 * Sequence of user ids to track which users have voted on this note.
+			 */
+			votes: sf.array(sf.string),
+			created: sf.number,
+			lastChanged: sf.number,
+		},
+	)
+	implements Item
+{
+	public View(props: {
+		clientId: string;
+		session: Session;
+		fluidMembers: string[];
+	}): JSX.Element {
+		throw new Error("Method not implemented.");
+	}
+	public deleted(): void {}
+
+	public static readonly description = "Note";
+	public static default(author: string = "unknown"): Note {
+		const timeStamp = new Date().getTime();
+		return new Note({
+			text: "",
+			author,
+			votes: [],
+			created: timeStamp,
+			lastChanged: timeStamp,
+		});
+	}
+	public static AddButton(props: { target: Items; clientId: string }): JSX.Element {
+		return AddNoteButton(props);
+	}
+
 	// Update the note text and also update the timestamp in the note
 	public readonly updateText = (text: string) => {
 		this.lastChanged = new Date().getTime();
@@ -425,3 +451,9 @@ function LikeButton(props: {
 function DeleteNoteButton(props: { deleteNote: () => void }): JSX.Element {
 	return <DeleteButton handleClick={() => props.deleteNote()}></DeleteButton>;
 }
+
+export const noteComponent: MyAppComponent = {
+	itemTypes(): Component.LazyArray<ItemSchema> {
+		return [() => Note];
+	},
+};

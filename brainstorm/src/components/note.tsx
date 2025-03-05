@@ -14,7 +14,7 @@ import { SchemaFactory, Tree } from "fluid-framework";
 import { IconButton, MiniThumb, DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
 import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions.js";
-import { Items } from "./items.js";
+import { itemAllowedTypes, Items } from "./items.js";
 import { Group } from "./group.js";
 import { Component } from "fluid-framework/alpha";
 
@@ -62,9 +62,9 @@ export class Note
 			lastChanged: timeStamp,
 		});
 	}
-	public static AddButton(props: { target: Items; clientId: string }): JSX.Element {
-		return AddNoteButton(props);
-	}
+
+	public static readonly AddButton = (props: { target: Items; clientId: string }): JSX.Element =>
+		AddNoteButton(props);
 
 	// Update the note text and also update the timestamp in the note
 	public readonly updateText = (text: string) => {
@@ -224,11 +224,7 @@ export function NoteView(props: {
 			isOver: !!monitor.isOver(),
 			canDrop: !!monitor.canDrop(),
 		}),
-		canDrop: (item) => {
-			if (Tree.is(item, Note)) return true;
-			if (Tree.is(item, Group) && !Tree.contains(item, parent)) return true;
-			return false;
-		},
+		canDrop: (item) => Tree.is(item, itemAllowedTypes) && !Tree.contains(item, parent),
 		drop: (item) => {
 			if (Tree.is(item, Group) || Tree.is(item, Note)) {
 				moveItem(item, parent.indexOf(props.note), parent);
@@ -351,17 +347,13 @@ function NoteToolbar(props: {
 	);
 }
 
-export function AddNoteButton(props: { target: Items; clientId: string }): JSX.Element {
+function AddNoteButton(props: { target: Items; clientId: string }): JSX.Element {
 	const [{ isActive }, drop] = useDrop(() => ({
 		accept: [dragType.NOTE, dragType.GROUP],
 		collect: (monitor) => ({
 			isActive: monitor.canDrop() && monitor.isOver(),
 		}),
-		canDrop: (item) => {
-			if (Tree.is(item, Note)) return true;
-			if (Tree.is(item, Group) && !Tree.contains(item, props.target)) return true;
-			return false;
-		},
+		canDrop: (item) => Tree.is(item, itemAllowedTypes) && !Tree.contains(item, props.target),
 		drop: (item) => {
 			if (Tree.is(item, Note) || Tree.is(item, Group)) {
 				const parent = Tree.parent(item);

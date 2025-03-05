@@ -3,17 +3,56 @@
  * Licensed under the MIT License.
  */
 
+// Include a UUID to guarantee that this schema will be uniquely identifiable.
+
+import { SchemaFactory, Tree, ValidateRecursiveSchema } from "fluid-framework";
+import { Items, ItemsView } from "./items.js";
 import React, { JSX, useEffect, useState } from "react";
-import { moveItem } from "../utils/app_helpers.js";
-import { ConnectableElement, useDrag, useDrop } from "react-dnd";
-import { DeleteButton } from "./buttonux.js";
 import { dragType } from "../utils/utils.js";
+import { ConnectableElement, useDrag, useDrop } from "react-dnd";
+import { moveItem } from "../utils/app_helpers.js";
+import { DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
-import { ItemsView } from "../components/items.js";
-import { Items } from "../components/items.js";
-import { Note } from "../components/note.js";
-import { Group } from "../components/group.js";
-import { Tree } from "fluid-framework";
+import { Note } from "./note.js";
+
+// As this schema uses a recursive type, the beta SchemaFactoryRecursive is used instead of just SchemaFactory.
+const sf = new SchemaFactory("d3872080-b9bd-4315-a210-0dda4fedcb18");
+
+// Define the schema for the container of notes.
+export class Group extends sf.objectRecursive("Group", {
+	id: sf.string,
+	name: sf.string,
+	items: Items,
+}) {
+	/**
+	 * Removes a group from its parent {@link Items}.
+	 * If the note is not in an {@link Items}, it is left unchanged.
+	 *
+	 * Before removing the group, its children are move to the parent.
+	 */
+	public readonly delete = () => {
+		const parent = Tree.parent(this);
+		if (Tree.is(parent, Items)) {
+			// Run the deletion as a transaction to ensure that the tree is in a consistent state
+			Tree.runTransaction(parent, () => {
+				// Move the children of the group to the parent
+				if (this.items.length !== 0) {
+					const index = parent.indexOf(this);
+					parent.moveRangeToIndex(index, 0, this.items.length, this.items);
+				}
+
+				// Delete the now empty group
+				const i = parent.indexOf(this);
+				parent.removeAt(i);
+			});
+		}
+	};
+}
+
+{
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	type _check = ValidateRecursiveSchema<typeof Group>;
+}
 
 export function GroupView(props: {
 	group: Group;

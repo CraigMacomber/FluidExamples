@@ -4,7 +4,6 @@
  */
 
 import React, { JSX } from "react";
-import { Items, Note } from "../schema/app_schema.js";
 import { moveItem, findNote } from "../utils/app_helpers.js";
 import {
 	ThumbLikeFilled,
@@ -18,6 +17,8 @@ import {
 import { Session } from "../schema/session_schema.js";
 import { getSelectedNotes } from "../utils/session_helpers.js";
 import { Tree } from "fluid-framework";
+import { Note } from "../components/note.js";
+import { Items } from "../components/items.js";
 
 export function NewGroupButton(props: {
 	items: Items;

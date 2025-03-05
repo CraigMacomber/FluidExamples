@@ -4,7 +4,6 @@
  */
 
 import React, { JSX, useEffect, useState } from "react";
-import { Note, Group, Items } from "../schema/app_schema.js";
 import { Session } from "../schema/session_schema.js";
 import {
 	ConnectionState,
@@ -14,8 +13,6 @@ import {
 	Tree,
 	TreeView,
 } from "fluid-framework";
-import { GroupView } from "./groupux.js";
-import { AddNoteButton, NoteView, RootNoteWrapper } from "./noteux.js";
 import {
 	Floater,
 	NewGroupButton,
@@ -27,6 +24,9 @@ import {
 } from "./buttonux.js";
 import { undefinedUserId } from "../utils/utils.js";
 import { undoRedo } from "../utils/undo.js";
+import { Items, ItemsView } from "../components/items.js";
+import { Note } from "../components/note.js";
+import { Group } from "../components/group.js";
 
 export function Canvas(props: {
 	items: TreeView<typeof Items>;
@@ -127,65 +127,4 @@ export function Canvas(props: {
 			</Floater>
 		</div>
 	);
-}
-
-export function ItemsView(props: {
-	items: (Note | Group)[];
-	parent: Items;
-	clientId: string;
-	session: Session;
-	fluidMembers: string[];
-}): JSX.Element {
-	const isRoot = Tree.parent(props.parent) === undefined;
-
-	const pilesArray = [];
-	for (const i of props.items) {
-		if (Tree.is(i, Group)) {
-			pilesArray.push(
-				<GroupView
-					key={i.id}
-					group={i}
-					clientId={props.clientId}
-					session={props.session}
-					fluidMembers={props.fluidMembers}
-				/>,
-			);
-		} else if (Tree.is(i, Note)) {
-			if (isRoot) {
-				pilesArray.push(
-					<RootNoteWrapper
-						key={i.id}
-						note={i}
-						clientId={props.clientId}
-						session={props.session}
-						fluidMembers={props.fluidMembers}
-					/>,
-				);
-			} else {
-				pilesArray.push(
-					<NoteView
-						key={i.id}
-						note={i}
-						clientId={props.clientId}
-						session={props.session}
-						fluidMembers={props.fluidMembers}
-					/>,
-				);
-			}
-		}
-	}
-
-	if (isRoot) {
-		return (
-			<div className="flex grow-0 flex-row h-full w-full flex-wrap gap-4 p-4 content-start overflow-y-scroll">
-				{pilesArray}
-				<div className="flex w-full h-24"></div>
-			</div>
-		);
-	} else {
-		pilesArray.push(
-			<AddNoteButton key="newNote" target={props.parent} clientId={props.clientId} />,
-		);
-		return <div className="flex flex-row flex-wrap gap-8 p-2">{pilesArray}</div>;
-	}
 }

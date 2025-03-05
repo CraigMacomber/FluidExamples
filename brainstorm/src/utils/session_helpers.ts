@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Note } from "../schema/app_schema.js";
+import { Note } from "../components/note.js";
 import { Session, Client } from "../schema/session_schema.js";
 import { selectAction, undefinedUserId } from "./utils.js";
 

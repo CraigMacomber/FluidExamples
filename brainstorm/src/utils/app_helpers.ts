@@ -42,11 +42,14 @@ export function findNote(items: Items, id: string): Note | undefined {
 	for (const i of items) {
 		if (Tree.is(i, Note)) {
 			if (i.id === id) return i;
-		} else {
+		} else if (Tree.is(i, Group)) {
 			const n = findNote(i.items, id);
 			if (n !== undefined) {
 				return n;
 			}
+		} else {
+			// TODO: group case should probably be rewritten in terms of TreeNode to handle all cases.
+			throw new Error("Unknown item type");
 		}
 	}
 	return undefined;

@@ -91,9 +91,7 @@ export function GroupView(props: {
 }): JSX.Element {
 	// copy the array of items from the group
 	// to force a re-render when the array changes
-	const [itemsArray, setItemsArray] = useState<(Note | Group)[]>(
-		props.group.items.map((item) => item),
-	);
+	const [itemsArray, setItemsArray] = useState<Item[]>(props.group.items.map((item) => item));
 	const [name, setName] = useState(props.group.name);
 
 	// Register for tree deltas when the component mounts.

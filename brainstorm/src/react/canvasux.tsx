@@ -25,8 +25,7 @@ import {
 import { undefinedUserId } from "../utils/utils.js";
 import { undoRedo } from "../utils/undo.js";
 import { Items, ItemsView } from "../components/items.js";
-import { Note } from "../components/note.js";
-import { Group } from "../components/group.js";
+import { Item } from "../components/itemAbstractions.js";
 
 export function Canvas(props: {
 	items: TreeView<typeof Items>;
@@ -41,9 +40,7 @@ export function Canvas(props: {
 	setSaved: (arg: boolean) => void;
 	setFluidMembers: (arg: string[]) => void;
 }): JSX.Element {
-	const [itemsArray, setItemsArray] = useState<(Note | Group)[]>(
-		props.items.root.map((item) => item),
-	);
+	const [itemsArray, setItemsArray] = useState<Item[]>(props.items.root.map((item) => item));
 
 	// Register for tree deltas when the component mounts.
 	// Any time the items array changes, the app will update.

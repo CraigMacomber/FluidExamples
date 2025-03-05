@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, Tree, ValidateRecursiveSchema } from "fluid-framework/alpha";
+import { customizeSchemaTyping, SchemaFactory, Tree } from "fluid-framework/alpha";
 import { Session } from "../schema/session_schema.js";
 import { Group, GroupView } from "./group.js";
 import { AddNoteButton, Note, NoteView, RootNoteWrapper } from "./note.js";
 import React, { JSX } from "react";
 import { v4 as uuid } from "uuid";
+import { Item } from "./itemAbstractions.js";
 
 const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
 
 // Schema for a list of Notes and Groups.
-export class Items extends sf.arrayRecursive("Items", [() => Group, () => Note]) {
+export class Items extends sf.array(
+	"Items",
+	customizeSchemaTyping([() => Group, () => Note]).simplifiedUnrestricted<Item>(),
+) {
 	public readonly addNode = (author: string) => {
 		const timeStamp = new Date().getTime();
 
@@ -46,16 +50,8 @@ export class Items extends sf.arrayRecursive("Items", [() => Group, () => Note])
 	};
 }
 
-{
-	// Due to limitations of TypeScript, recursive schema may not produce type errors when declared incorrectly.
-	// Using ValidateRecursiveSchema helps ensure that mistakes made in the definition of a recursive schema (like `Items`)
-	// will introduce a compile error.
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	type _check = ValidateRecursiveSchema<typeof Items>;
-}
-
 export function ItemsView(props: {
-	items: (Note | Group)[];
+	items: Item[];
 	parent: Items;
 	clientId: string;
 	session: Session;

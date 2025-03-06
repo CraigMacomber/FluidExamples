@@ -10,7 +10,6 @@ import {
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
-	TreeNode,
 } from "fluid-framework/alpha";
 import { Session } from "../schema/session_schema.js";
 import { Group } from "./group.js";
@@ -29,14 +28,12 @@ function makeItems(items: Component.LazyArray<ItemSchema>) {
 		customizeSchemaTyping(items).simplifiedUnrestricted<Item>(),
 	) {
 		public get [ItemParentSymbol](): ItemParent {
+			// eslint-disable-next-line @typescript-eslint/no-this-alias
+			const parentArray = this;
 			return {
-				/**
-				 * Removes a node from its parent {@link Items}.
-				 * If the note is not in an {@link Items}, it is left unchanged.
-				 */
 				deleteItem(item: Item): void {
-					const index = this.indexOf(item);
-					this.removeAt(index);
+					const index = parentArray.indexOf(item);
+					parentArray.removeAt(index);
 				},
 			};
 		}
@@ -95,13 +92,27 @@ export function ItemsView(props: {
 }
 
 export interface ItemParent {
+	/**
+	 * Removes a child node.
+	 * If the node is not in an {@link Items}, it is left unchanged.
+	 */
 	deleteItem(item: Item): void;
 }
 
+interface HasItemParent {
+	get [ItemParentSymbol](): ItemParent;
+}
+
 export function deleteItemFromParent(item: Item): void {
-	const parent = Tree.parent(item);
-	if (Tree.is(parent, Items)) {
+	const parent = Tree.parent(item) as Partial<HasItemParent>;
+
+	// Only remove if this item lives under a container
+	if (parent !== undefined) {
 		const itemParent = parent[ItemParentSymbol];
-		itemParent.deleteItem(item);
+
+		// ItemParent must exist
+		if (itemParent !== undefined) {
+			itemParent.deleteItem(item);
+		}
 	}
 }

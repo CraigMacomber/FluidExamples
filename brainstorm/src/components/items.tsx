@@ -100,7 +100,7 @@ export interface ItemParent {
 }
 
 interface HasItemParent extends TreeNode {
-	get [ItemParentSymbol](): ItemParent;
+	readonly [ItemParentSymbol]: ItemParent;
 }
 
 function tryAsItemParent(node: TreeNode): ItemParent | undefined {

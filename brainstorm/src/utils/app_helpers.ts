@@ -4,8 +4,6 @@
  */
 
 import { Tree, TreeStatus } from "fluid-framework";
-import { Group } from "../components/group.js";
-import { Note } from "../components/note.js";
 import { Items } from "../components/items.js";
 import { Item } from "../components/itemAbstractions.js";
 
@@ -41,17 +39,23 @@ export function moveItem(item: Item, destinationIndex: number, destination: Item
 
 export function findItem(items: Items, id: string): Item | undefined {
 	for (const i of items) {
-		if (Tree.is(i, Note)) {
-			if (i.id === id) return i;
-		} else if (Tree.is(i, Group)) {
-			const n = findItem(i.items, id);
-			if (n !== undefined) {
-				return n;
-			}
-		} else {
-			// TODO: group case should probably be rewritten in terms of TreeNode to handle all cases.
-			throw new Error("Unknown item type");
+		const n = findItemInItem(i, id);
+		if (n !== undefined) {
+			return n;
 		}
 	}
+	return undefined;
+}
+
+function findItemInItem(item: Item, id: string): Item | undefined {
+	if (item.id === id) return item;
+
+	for (const i of item.children()) {
+		const n = findItemInItem(i, id);
+		if (n !== undefined) {
+			return n;
+		}
+	}
+
 	return undefined;
 }

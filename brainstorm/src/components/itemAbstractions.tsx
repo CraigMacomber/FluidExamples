@@ -51,6 +51,8 @@ export interface ItemExtensions {
 	 * Allows things like Groups moving selected items into themselves.
 	 */
 	postInsertNew?(items: Items, session: Session, clientId: string): void;
+
+	children(): Iterable<Item>;
 }
 
 /**

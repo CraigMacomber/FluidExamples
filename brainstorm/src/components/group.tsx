@@ -31,6 +31,9 @@ export class Group
 	})
 	implements Item
 {
+	public children(): Iterable<Item> {
+		return this.items;
+	}
 	public static readonly description = "Group";
 	public static readonly icon = (<RectangleLandscapeRegular />);
 	public static default(author: string, name = "[new group]"): Group {
@@ -40,7 +43,7 @@ export class Group
 		});
 	}
 
-	public insertNew(items: Items, session: Session, clientId: string): void {
+	public postInsertNew(items: Items, session: Session, clientId: string): void {
 		// Move selected items into this group
 		const ids = getSelectedItems(session, clientId);
 		for (const id of ids) {

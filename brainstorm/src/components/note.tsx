@@ -43,6 +43,9 @@ export class Note
 	)
 	implements Item
 {
+	public children(): Iterable<Item> {
+		return [];
+	}
 	public View(props: {
 		schema: Item;
 		clientId: string;

@@ -10,6 +10,7 @@ import {
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
+	TreeNode,
 } from "fluid-framework/alpha";
 import { Session } from "../schema/session_schema.js";
 import { Group } from "./group.js";
@@ -19,12 +20,25 @@ import { Item, ItemSchema } from "./itemAbstractions.js";
 
 const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
 
+export const ItemParentSymbol = Symbol("ItemParent");
+
 function makeItems(items: Component.LazyArray<ItemSchema>) {
 	// Schema for a list of Notes and Groups.
 	return class Items extends sf.array(
 		"Items",
 		customizeSchemaTyping(items).simplifiedUnrestricted<Item>(),
 	) {
+		public get [ItemParentSymbol](): ItemParent {
+			// eslint-disable-next-line @typescript-eslint/no-this-alias
+			const parentArray = this;
+			return {
+				deleteItem(item: Item): void {
+					const index = parentArray.indexOf(item);
+					parentArray.removeAt(index);
+				},
+			};
+		}
+
 		public readonly View = (props: {
 			clientId: string;
 			session: Session;
@@ -92,16 +106,30 @@ export const itemAllowedTypes: Component.LazyArray<ItemSchema> = [() => Group, (
 
 export const Items = makeItems(itemAllowedTypes);
 
-/**
- * Removes a node from its parent {@link Items}.
- * If the note is not in an {@link Items}, it is left unchanged.
- */
-export function deleteItem(item: Item): void {
+export interface ItemParent {
+	/**
+	 * Removes a child Item.
+	 */
+	deleteItem(item: Item): void;
+}
+
+interface HasItemParent extends TreeNode {
+	readonly [ItemParentSymbol]: ItemParent;
+}
+
+function tryAsItemParent(node: TreeNode): ItemParent | undefined {
+	return (node as HasItemParent)[ItemParentSymbol];
+}
+
+export function removeItemFromParent(item: Item): void {
 	const parent = Tree.parent(item);
-	// Use type narrowing to ensure that parent is Items as expected for an Item.
-	// TODO: introduce a way to do this without requiring a runtime reference to Items.
-	if (Tree.is(parent, Items)) {
-		const index = parent.indexOf(item);
-		parent.removeAt(index);
+
+	if (parent !== undefined) {
+		const itemParent = tryAsItemParent(parent);
+
+		// Only remove if this item lives under a container
+		if (itemParent !== undefined) {
+			itemParent.deleteItem(item);
+		}
 	}
 }

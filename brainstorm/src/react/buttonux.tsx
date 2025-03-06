@@ -4,7 +4,7 @@
  */
 
 import React, { JSX } from "react";
-import { findItem as findItem } from "../utils/app_helpers.js";
+import { findItem } from "../utils/app_helpers.js";
 import {
 	ThumbLikeFilled,
 	DismissFilled,

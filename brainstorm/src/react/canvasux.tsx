@@ -10,7 +10,6 @@ import {
 	IFluidContainer,
 	IMember,
 	IServiceAudience,
-	Tree,
 	TreeView,
 } from "fluid-framework";
 import {
@@ -23,8 +22,7 @@ import {
 } from "./buttonux.js";
 import { undefinedUserId } from "../utils/utils.js";
 import { undoRedo } from "../utils/undo.js";
-import { itemAllowedTypes, Items, ItemsView } from "../components/items.js";
-import { Item } from "../components/itemAbstractions.js";
+import { itemAllowedTypes, Items } from "../components/items.js";
 import { evaluateLazySchema } from "fluid-framework/alpha";
 
 export function Canvas(props: {
@@ -40,13 +38,13 @@ export function Canvas(props: {
 	setSaved: (arg: boolean) => void;
 	setFluidMembers: (arg: string[]) => void;
 }): JSX.Element {
-	const [itemsArray, setItemsArray] = useState<Item[]>(props.items.root.map((item) => item));
+	const [items, setItems] = useState<Items>(props.items.root);
 
 	// Register for tree deltas when the component mounts.
 	// Any time the items array changes, the app will update.
 	useEffect(() => {
-		const unsubscribe = Tree.on(props.items.root, "nodeChanged", () => {
-			setItemsArray(props.items.root.map((item) => item));
+		const unsubscribe = props.items.events.on("rootChanged", () => {
+			setItems(props.items.root);
 		});
 		return unsubscribe;
 	}, []);
@@ -107,12 +105,12 @@ export function Canvas(props: {
 		);
 	});
 
+	const ItemsView = items.View;
+
 	return (
 		<div className="relative flex grow-0 h-full w-full bg-transparent">
 			<div>
 				<ItemsView
-					items={itemsArray}
-					parent={props.items.root}
 					clientId={props.currentUser}
 					session={props.sessionTree.root}
 					fluidMembers={props.fluidMembers}

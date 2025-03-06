@@ -49,6 +49,7 @@ export function ItemsView(props: {
 		const View = i.View;
 		pilesArray.push(
 			<View
+				key={i.id}
 				schema={i}
 				clientId={props.clientId}
 				session={props.session}

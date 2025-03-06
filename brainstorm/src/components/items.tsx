@@ -10,6 +10,7 @@ import {
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
+	TreeNode,
 } from "fluid-framework/alpha";
 import { Session } from "../schema/session_schema.js";
 import { Group } from "./group.js";
@@ -19,7 +20,7 @@ import { Item, ItemSchema } from "./itemAbstractions.js";
 
 const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
 
-const ItemParentSymbol = Symbol();
+export const ItemParentSymbol = Symbol("ItemParent");
 
 function makeItems(items: Component.LazyArray<ItemSchema>) {
 	// Schema for a list of Notes and Groups.
@@ -98,20 +99,20 @@ export interface ItemParent {
 	deleteItem(item: Item): void;
 }
 
-interface IsItemParent {
+interface HasItemParent extends TreeNode {
 	get [ItemParentSymbol](): ItemParent;
 }
 
+function tryAsItemParent(node: TreeNode): ItemParent | undefined {
+	const parent = Tree.parent(node);
+	return parent != undefined ? (parent as HasItemParent)[ItemParentSymbol] : undefined;
+}
+
 export function removeItemFromParent(item: Item): void {
-	const parent = Tree.parent(item) as Partial<HasItemParent>;
+	const itemParent = tryAsItemParent(item);
 
 	// Only remove if this item lives under a container
-	if (parent !== undefined) {
-		const itemParent = parent[ItemParentSymbol];
-
-		// ItemParent must exist
-		if (itemParent !== undefined) {
-			itemParent.deleteItem(item);
-		}
+	if (itemParent !== undefined) {
+		itemParent.deleteItem(item);
 	}
 }

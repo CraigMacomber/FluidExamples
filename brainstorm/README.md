@@ -44,7 +44,7 @@ This app is built using React. Changes to the data are handled using the helper 
 
 ### Invalidation
 
-SharedTree's TreeNodes are mutable object which can be edited locally, but also edited by remote clients: this can be challenging to make work with tools like React.
+SharedTree's TreeNodes are mutable objects which can be edited locally, but also edited by remote clients: this can be challenging to make work with tools like React.
 To know when changes occur, this application subscribes to events.
 This is mostly done using the [`nodeChanged`](https://fluidframework.com/docs/api/fluid-framework/treechangeevents-interface#nodechanged-methodsignature) and [`treeChanged`](https://fluidframework.com/docs/api/fluid-framework/treechangeevents-interface#treechanged-methodsignature) events.
 These are hooked into React by using React's [`useState` hook](https://react.dev/reference/react/useState) to produce a state variable and a setter callback which is then hooked up to the SharedTree events.

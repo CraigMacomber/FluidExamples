@@ -94,7 +94,6 @@ export function ItemsView(props: {
 export interface ItemParent {
 	/**
 	 * Removes a child node.
-	 * If the node is not in an {@link Items}, it is left unchanged.
 	 */
 	deleteItem(item: Item): void;
 }

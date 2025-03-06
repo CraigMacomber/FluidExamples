@@ -93,7 +93,7 @@ export function ItemsView(props: {
 
 export interface ItemParent {
 	/**
-	 * Removes a child node.
+	 * Removes a child Item.
 	 */
 	deleteItem(item: Item): void;
 }

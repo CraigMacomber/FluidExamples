@@ -12,7 +12,7 @@ import { itemAllowedTypes, Items, ItemsView } from "./items.js";
 import React, { JSX, useEffect, useState } from "react";
 import { dragType } from "../utils/utils.js";
 import { ConnectableElement, useDrag, useDrop } from "react-dnd";
-import { findNote, moveItem } from "../utils/app_helpers.js";
+import { findItem, moveItem } from "../utils/app_helpers.js";
 import { DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
 import { Note } from "./note.js";
@@ -44,7 +44,7 @@ export class Group
 		// Move selected items into this group
 		const ids = getSelectedItems(session, clientId);
 		for (const id of ids) {
-			const n = findNote(items, id);
+			const n = findItem(items, id);
 			if (Tree.is(n, itemAllowedTypes)) {
 				moveItem(n, Infinity, this.items);
 			}

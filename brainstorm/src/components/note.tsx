@@ -14,7 +14,7 @@ import { SchemaFactory, Tree } from "fluid-framework";
 import { IconButton, MiniThumb, DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
 import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions.js";
-import { itemAllowedTypes, Items } from "./items.js";
+import { deleteItem, itemAllowedTypes, Items } from "./items.js";
 import { Group } from "./group.js";
 import { Component } from "fluid-framework/alpha";
 import { NoteRegular } from "@fluentui/react-icons";
@@ -85,19 +85,6 @@ export class Note
 		}
 
 		this.lastChanged = new Date().getTime();
-	};
-
-	/**
-	 * Removes a node from its parent {@link Items}.
-	 * If the note is not in an {@link Items}, it is left unchanged.
-	 */
-	public readonly delete = () => {
-		const parent = Tree.parent(this);
-		// Use type narrowing to ensure that parent is Items as expected for a note.
-		if (Tree.is(parent, Items)) {
-			const index = parent.indexOf(this);
-			parent.removeAt(index);
-		}
 	};
 }
 
@@ -271,7 +258,7 @@ export function NoteView(props: {
 						voted={props.note.votes.indexOf(props.clientId) > -1}
 						toggleVote={() => props.note.toggleVote(props.clientId)}
 						voteCount={noteVoteCount}
-						deleteNote={props.note.delete}
+						deleteNote={() => deleteItem(props.note)}
 					/>
 					<NoteTextArea
 						text={noteText}

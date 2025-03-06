@@ -4,7 +4,7 @@
  */
 
 import React, { JSX } from "react";
-import { findNote } from "../utils/app_helpers.js";
+import { findItem as findItem } from "../utils/app_helpers.js";
 import {
 	ThumbLikeFilled,
 	DismissFilled,
@@ -15,7 +15,7 @@ import {
 import { Session } from "../schema/session_schema.js";
 import { getSelectedItems } from "../utils/session_helpers.js";
 import { Tree } from "fluid-framework";
-import { Items } from "../components/items.js";
+import { deleteItem, Items } from "../components/items.js";
 import { ItemSchema } from "../components/itemAbstractions.js";
 
 export function NewItemButton(props: {
@@ -57,8 +57,10 @@ export function DeleteNotesButton(props: {
 		Tree.runTransaction(props.items, () => {
 			const ids = getSelectedItems(props.session, props.clientId);
 			for (const i of ids) {
-				const n = findNote(props.items, i);
-				n?.delete();
+				const n = findItem(props.items, i);
+				if (n !== undefined) {
+					deleteItem(n);
+				}
 			}
 		});
 	};

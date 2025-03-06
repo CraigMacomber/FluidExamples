@@ -9,6 +9,8 @@ This app is designed to use
 
 To use AzureClient's local mode, you first need to start a local server.
 
+TODO: fix that selection doesn't work when disconnected.
+
 ```bash
 npm run start:server
 ```

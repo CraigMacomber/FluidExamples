@@ -15,7 +15,6 @@ import { Session } from "../schema/session_schema.js";
 import { Group } from "./group.js";
 import { Note } from "./note.js";
 import React, { JSX } from "react";
-import { v4 as uuid } from "uuid";
 import { Item, ItemSchema } from "./itemAbstractions.js";
 
 const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
@@ -25,38 +24,7 @@ function makeItems(items: Component.LazyArray<ItemSchema>) {
 	return class Items extends sf.array(
 		"Items",
 		customizeSchemaTyping(items).simplifiedUnrestricted<Item>(),
-	) {
-		public readonly addNode = (author: string) => {
-			const timeStamp = new Date().getTime();
-
-			// Define the note to add to the SharedTree - this must conform to
-			// the schema definition of a note
-			const newNote = new Note({
-				text: "",
-				author,
-				votes: [],
-				created: timeStamp,
-				lastChanged: timeStamp,
-			});
-
-			// Insert the note into the SharedTree.
-			this.insertAtEnd(newNote);
-		};
-
-		/**
-		 * Add a new group (container for notes) to the SharedTree.
-		 */
-		public readonly addGroup = (name: string): Group => {
-			const group = new Group({
-				id: uuid(),
-				name,
-				items: new Items([]),
-			});
-
-			this.insertAtEnd(group);
-			return group;
-		};
-	};
+	) {};
 }
 
 export type Items = NodeFromSchema<ReturnType<typeof makeItems>>;

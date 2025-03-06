@@ -30,8 +30,11 @@ export class Group
 	implements Item
 {
 	public static readonly description = "Group";
-	public static default(): Group {
-		throw new Error("Not implemented");
+	public static default(author: string, name = "[new group]"): Group {
+		return new Group({
+			name,
+			items: new Items([]),
+		});
 	}
 
 	public deleted(oldParent: Items, oldIndex: number): void {

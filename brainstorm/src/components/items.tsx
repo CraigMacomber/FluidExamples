@@ -104,15 +104,18 @@ interface HasItemParent extends TreeNode {
 }
 
 function tryAsItemParent(node: TreeNode): ItemParent | undefined {
-	const parent = Tree.parent(node);
-	return parent != undefined ? (parent as HasItemParent)[ItemParentSymbol] : undefined;
+	return (node as HasItemParent)[ItemParentSymbol];
 }
 
 export function removeItemFromParent(item: Item): void {
-	const itemParent = tryAsItemParent(item);
+	const parent = Tree.parent(item);
 
-	// Only remove if this item lives under a container
-	if (itemParent !== undefined) {
-		itemParent.deleteItem(item);
+	if (parent !== undefined) {
+		const itemParent = tryAsItemParent(parent);
+
+		// Only remove if this item lives under a container
+		if (itemParent !== undefined) {
+			itemParent.deleteItem(item);
+		}
 	}
 }

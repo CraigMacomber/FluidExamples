@@ -15,8 +15,7 @@ import {
 } from "fluid-framework";
 import {
 	Floater,
-	NewGroupButton,
-	NewNoteButton,
+	NewItemButton,
 	DeleteNotesButton,
 	ButtonGroup,
 	UndoButton,
@@ -24,8 +23,9 @@ import {
 } from "./buttonux.js";
 import { undefinedUserId } from "../utils/utils.js";
 import { undoRedo } from "../utils/undo.js";
-import { Items, ItemsView } from "../components/items.js";
+import { itemAllowedTypes, Items, ItemsView } from "../components/items.js";
 import { Item } from "../components/itemAbstractions.js";
+import { evaluateLazySchema } from "fluid-framework/alpha";
 
 export function Canvas(props: {
 	items: TreeView<typeof Items>;
@@ -94,23 +94,34 @@ export function Canvas(props: {
 		};
 	}, []);
 
+	const newItemButtons: JSX.Element[] = itemAllowedTypes.map((item) => {
+		const Item = evaluateLazySchema(item);
+		return (
+			<NewItemButton
+				key={Item.description}
+				Item={Item}
+				items={props.items.root}
+				session={props.sessionTree.root}
+				clientId={props.currentUser}
+			/>
+		);
+	});
+
 	return (
 		<div className="relative flex grow-0 h-full w-full bg-transparent">
-			<ItemsView
-				items={itemsArray}
-				parent={props.items.root}
-				clientId={props.currentUser}
-				session={props.sessionTree.root}
-				fluidMembers={props.fluidMembers}
-			/>
+			<div>
+				<ItemsView
+					items={itemsArray}
+					parent={props.items.root}
+					clientId={props.currentUser}
+					session={props.sessionTree.root}
+					fluidMembers={props.fluidMembers}
+				/>
+				<div className="flex w-full h-24"></div>
+			</div>
 			<Floater>
 				<ButtonGroup>
-					<NewGroupButton
-						items={props.items.root}
-						session={props.sessionTree.root}
-						clientId={props.currentUser}
-					/>
-					<NewNoteButton items={props.items.root} clientId={props.currentUser} />
+					{newItemButtons}
 					<DeleteNotesButton
 						session={props.sessionTree.root}
 						items={props.items.root}

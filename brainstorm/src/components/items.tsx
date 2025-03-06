@@ -98,7 +98,7 @@ export interface ItemParent {
 	deleteItem(item: Item): void;
 }
 
-export function deleteItemFromParent(item: Item & TreeNode): void {
+export function deleteItemFromParent(item: Item): void {
 	const parent = Tree.parent(item);
 	if (Tree.is(parent, Items)) {
 		const itemParent = parent[ItemParentSymbol];

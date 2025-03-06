@@ -99,19 +99,6 @@ export class Note
 	};
 }
 
-export function RootNoteWrapper(props: {
-	note: Note;
-	clientId: string;
-	session: Session;
-	fluidMembers: string[];
-}): JSX.Element {
-	return (
-		<div className="bg-transparent flex flex-col justify-center h-64">
-			<NoteView {...props} />
-		</div>
-	);
-}
-
 export function NoteView(props: {
 	note: Note;
 	clientId: string;

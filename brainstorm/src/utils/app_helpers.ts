@@ -4,13 +4,12 @@
  */
 
 import { Tree, TreeStatus } from "fluid-framework";
-import { Group } from "../components/group.js";
-import { Note } from "../components/note.js";
 import { Items } from "../components/items.js";
+import { Item } from "../components/itemAbstractions.js";
 
 // Move a note from one position in a sequence to another position in the same sequence or
 // in a different sequence. The index being passed here is the desired index after the move.
-export function moveItem(item: Note | Group, destinationIndex: number, destination: Items) {
+export function moveItem(item: Item, destinationIndex: number, destination: Items) {
 	// need to test that the destination or the item being dragged hasn't been deleted
 	// because the move may have been initiated through a drag and drop which
 	// is asynchronous - the state may have changed during the drag but this function
@@ -38,19 +37,25 @@ export function moveItem(item: Note | Group, destinationIndex: number, destinati
 	}
 }
 
-export function findNote(items: Items, id: string): Note | undefined {
+export function findItem(items: Items, id: string): Item | undefined {
 	for (const i of items) {
-		if (Tree.is(i, Note)) {
-			if (i.id === id) return i;
-		} else if (Tree.is(i, Group)) {
-			const n = findNote(i.items, id);
-			if (n !== undefined) {
-				return n;
-			}
-		} else {
-			// TODO: group case should probably be rewritten in terms of TreeNode to handle all cases.
-			throw new Error("Unknown item type");
+		const n = findItemInItem(i, id);
+		if (n !== undefined) {
+			return n;
 		}
 	}
+	return undefined;
+}
+
+function findItemInItem(item: Item, id: string): Item | undefined {
+	if (item.id === id) return item;
+
+	for (const i of item.children()) {
+		const n = findItemInItem(i, id);
+		if (n !== undefined) {
+			return n;
+		}
+	}
+
 	return undefined;
 }

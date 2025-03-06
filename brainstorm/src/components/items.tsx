@@ -50,7 +50,6 @@ export function ItemsView(props: {
 		pilesArray.push(
 			<View
 				key={i.id}
-				schema={i}
 				clientId={props.clientId}
 				session={props.session}
 				fluidMembers={props.fluidMembers}
@@ -76,5 +75,18 @@ export function ItemsView(props: {
 		}
 
 		return <div className="flex flex-row flex-wrap gap-8 p-2">{pilesArray}</div>;
+	}
+}
+
+/**
+ * Removes a node from its parent {@link Items}.
+ * If the note is not in an {@link Items}, it is left unchanged.
+ */
+export function deleteItem(item: Item): void {
+	const parent = Tree.parent(item);
+	// Use type narrowing to ensure that parent is Items as expected for an Item.
+	if (Tree.is(parent, Items)) {
+		const index = parent.indexOf(item);
+		parent.removeAt(index);
 	}
 }

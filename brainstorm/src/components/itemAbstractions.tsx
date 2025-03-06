@@ -34,12 +34,11 @@ export type ItemsSchema = typeof Items;
  * Properties all item types must implement.
  */
 export interface ItemExtensions {
-	View(props: {
-		schema: Item;
+	readonly View: (props: {
 		clientId: string;
 		session: Session;
 		fluidMembers: string[];
-	}): JSX.Element;
+	}) => JSX.Element;
 
 	/**
 	 * When deleting this item, it gets replaced by the returned items.
@@ -50,7 +49,9 @@ export interface ItemExtensions {
 	 * Customizes top level insert.
 	 * Allows things like Groups moving selected items into themselves.
 	 */
-	postInsertNew?(items: Items, session: Session, clientId: string): void;
+	postInsertNew?(session: Session, clientId: string): void;
+
+	children(): Iterable<Item>;
 }
 
 /**

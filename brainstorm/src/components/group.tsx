@@ -12,11 +12,10 @@ import { itemAllowedTypes, Items, ItemsView } from "./items.js";
 import React, { JSX, useEffect, useState } from "react";
 import { dragType } from "../utils/utils.js";
 import { ConnectableElement, useDrag, useDrop } from "react-dnd";
-import { findNote, moveItem } from "../utils/app_helpers.js";
+import { findItem, moveItem } from "../utils/app_helpers.js";
 import { DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
-import { Note } from "./note.js";
-import { Component } from "fluid-framework/alpha";
+import { Component, TreeAlpha } from "fluid-framework/alpha";
 import { getSelectedItems } from "../utils/session_helpers.js";
 import { RectangleLandscapeRegular } from "@fluentui/react-icons";
 
@@ -31,6 +30,9 @@ export class Group
 	})
 	implements Item
 {
+	public children(): Iterable<Item> {
+		return this.items;
+	}
 	public static readonly description = "Group";
 	public static readonly icon = (<RectangleLandscapeRegular />);
 	public static default(author: string, name = "[new group]"): Group {
@@ -40,11 +42,19 @@ export class Group
 		});
 	}
 
-	public insertNew(items: Items, session: Session, clientId: string): void {
+	public postInsertNew(session: Session, clientId: string): void {
 		// Move selected items into this group
+
+		// Look for selected items within root Items subtree.
+		// TODO: consider making findItem more generic to allow searching subtrees with unknown schema.
+		const branch = TreeAlpha.branch(this);
+		if (!branch?.hasRootSchema(Items)) {
+			return;
+		}
+
 		const ids = getSelectedItems(session, clientId);
 		for (const id of ids) {
-			const n = findNote(items, id);
+			const n = findItem(branch.root, id);
 			if (Tree.is(n, itemAllowedTypes)) {
 				moveItem(n, Infinity, this.items);
 			}
@@ -58,14 +68,13 @@ export class Group
 		}
 	}
 
-	public View(props: {
-		schema: Item;
+	public readonly View = (props: {
 		clientId: string;
 		session: Session;
 		fluidMembers: string[];
-	}): JSX.Element {
-		return <GroupView group={props.schema as unknown as Group} {...props} />;
-	}
+	}): JSX.Element => {
+		return <GroupView group={this} {...props} />;
+	};
 
 	/**
 	 * Removes a group from its parent {@link Items}.
@@ -130,7 +139,7 @@ export function GroupView(props: {
 	}
 
 	const [, drag] = useDrag(() => ({
-		type: dragType.GROUP,
+		type: dragType.ITEM,
 		item: props.group,
 		collect: (monitor) => ({
 			isDragging: monitor.isDragging(),
@@ -138,7 +147,7 @@ export function GroupView(props: {
 	}));
 
 	const [{ isOver, canDrop }, drop] = useDrop(() => ({
-		accept: [dragType.NOTE, dragType.GROUP],
+		accept: [dragType.ITEM],
 		collect: (monitor) => ({
 			isOver: !!monitor.isOver({ shallow: true }),
 			canDrop: !!monitor.canDrop(),
@@ -155,7 +164,7 @@ export function GroupView(props: {
 				return;
 			}
 
-			if (Tree.is(item, Group) || Tree.is(item, Note)) {
+			if (Tree.is(item, itemAllowedTypes)) {
 				moveItem(item, parent.indexOf(props.group), parent);
 			}
 

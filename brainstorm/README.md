@@ -42,6 +42,18 @@ special case local changes. Treat the SharedTree as your local data and rely on 
 
 This app is built using React. Changes to the data are handled using the helper functions mentioned above. If you look at the code in \*ux.tsx files, you'll find very little code that is unique to an app built with the Fluid Framework. If you want to change the css you must run 'npx tailwindcss -i ./src/index.css -o ./src/output.css --watch' in the root folder of your project so that tailwind can update the output.css file.
 
+### Invalidation
+
+SharedTree's TreeNodes are mutable object which can be edited locally, but also edited by remote clients: this can be challenging to make work with tools like React.
+To know when changes occur, this application subscribes to events.
+This is mostly done using the [`nodeChanged`](https://fluidframework.com/docs/api/fluid-framework/treechangeevents-interface#nodechanged-methodsignature) and [`treeChanged`](https://fluidframework.com/docs/api/fluid-framework/treechangeevents-interface#treechanged-methodsignature) events.
+These are hooked into React by using React's [`useState` hook](https://react.dev/reference/react/useState) to produce a state variable and a setter callback which is then hooked up to the SharedTree events.
+This must be done in such a way that the event registrations are not leaked (using `useEffect` to register and unregister) and such that they observe any edit that could impact the content of the React component reading the tree.
+
+This application follows the pattern where each React component is responsible for its own invalidation for changes to any data it reads out of the TreeNodes passed into or closed over by it.
+
+TODO: Tree or this application should provide some easier to use APIs or patterns for this, likely in the form of some utility methods and/or tools to facilitate alternative design patterns (like generating copy on write objects from trees).
+
 ## Devtools
 
 This sample application is configured to leverage the Fluid Framework's [Developer Tooling](https://fluidframework.com/docs/testing/devtools/).

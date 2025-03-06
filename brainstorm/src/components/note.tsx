@@ -14,7 +14,7 @@ import { SchemaFactory, Tree } from "fluid-framework";
 import { IconButton, MiniThumb, DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
 import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions.js";
-import { deleteItemFromParent, itemAllowedTypes, Items } from "./items.js";
+import { removeItemFromParent, itemAllowedTypes, Items } from "./items.js";
 import { Component } from "fluid-framework/alpha";
 import { NoteRegular } from "@fluentui/react-icons";
 
@@ -259,7 +259,7 @@ export function NoteView(props: {
 						voted={props.note.votes.indexOf(props.clientId) > -1}
 						toggleVote={() => props.note.toggleVote(props.clientId)}
 						voteCount={noteVoteCount}
-						deleteNote={() => deleteItemFromParent(props.note)}
+						deleteNote={() => removeItemFromParent(props.note)}
 					/>
 					<NoteTextArea
 						text={noteText}

@@ -103,7 +103,7 @@ interface HasItemParent {
 	get [ItemParentSymbol](): ItemParent;
 }
 
-export function deleteItemFromParent(item: Item): void {
+export function removeItemFromParent(item: Item): void {
 	const parent = Tree.parent(item) as Partial<HasItemParent>;
 
 	// Only remove if this item lives under a container

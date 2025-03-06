@@ -15,7 +15,7 @@ import {
 import { Session } from "../schema/session_schema.js";
 import { getSelectedItems } from "../utils/session_helpers.js";
 import { Tree } from "fluid-framework";
-import { deleteItemFromParent, Items } from "../components/items.js";
+import { removeItemFromParent, Items } from "../components/items.js";
 import { ItemSchema } from "../components/itemAbstractions.js";
 
 export function NewItemButton(props: {
@@ -59,7 +59,7 @@ export function DeleteNotesButton(props: {
 			for (const i of ids) {
 				const n = findItem(props.items, i);
 				if (n !== undefined) {
-					deleteItemFromParent(n);
+					removeItemFromParent(n);
 				}
 			}
 		});

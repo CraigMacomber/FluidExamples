@@ -35,12 +35,8 @@ function makeItems(items: Component.LazyArray<ItemSchema>) {
 				 * If the note is not in an {@link Items}, it is left unchanged.
 				 */
 				deleteItem(item: Item): void {
-					const parent = Tree.parent(item);
-					// Use type narrowing to ensure that parent is Items as expected for an Item.
-					if (Tree.is(parent, Items)) {
-						const index = parent.indexOf(item);
-						parent.removeAt(index);
-					}
+					const index = this.indexOf(item);
+					this.removeAt(index);
 				},
 			};
 		}

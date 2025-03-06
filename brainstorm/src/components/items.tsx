@@ -50,7 +50,6 @@ export function ItemsView(props: {
 		pilesArray.push(
 			<View
 				key={i.id}
-				schema={i}
 				clientId={props.clientId}
 				session={props.session}
 				fluidMembers={props.fluidMembers}

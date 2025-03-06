@@ -29,7 +29,7 @@ export function NewItemButton(props: {
 		Tree.runTransaction(props.items, () => {
 			const item = props.Item.default(props.clientId);
 			props.items.insertAtEnd(item);
-			item.postInsertNew?.(props.items, props.session, props.clientId);
+			item.postInsertNew?.(props.session, props.clientId);
 		});
 	};
 

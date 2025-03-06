@@ -15,7 +15,6 @@ import { IconButton, MiniThumb, DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
 import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions.js";
 import { deleteItem, itemAllowedTypes, Items } from "./items.js";
-import { Group } from "./group.js";
 import { Component } from "fluid-framework/alpha";
 import { NoteRegular } from "@fluentui/react-icons";
 
@@ -46,14 +45,13 @@ export class Note
 	public children(): Iterable<Item> {
 		return [];
 	}
-	public View(props: {
-		schema: Item;
+	public readonly View = (props: {
 		clientId: string;
 		session: Session;
 		fluidMembers: string[];
-	}): JSX.Element {
-		return <NoteView note={props.schema as unknown as Note} {...props} />;
-	}
+	}): JSX.Element => {
+		return <NoteView note={this} {...props} />;
+	};
 
 	public deleted(): void {}
 
@@ -192,7 +190,7 @@ export function NoteView(props: {
 	}, [props.note.text]);
 
 	const [{ isDragging }, drag] = useDrag(() => ({
-		type: dragType.NOTE,
+		type: dragType.ITEM,
 		item: props.note,
 		collect: (monitor) => ({
 			isDragging: monitor.isDragging(),
@@ -200,14 +198,14 @@ export function NoteView(props: {
 	}));
 
 	const [{ isOver, canDrop }, drop] = useDrop(() => ({
-		accept: [dragType.NOTE, dragType.GROUP],
+		accept: [dragType.ITEM],
 		collect: (monitor) => ({
 			isOver: !!monitor.isOver(),
 			canDrop: !!monitor.canDrop(),
 		}),
 		canDrop: (item) => Tree.is(item, itemAllowedTypes) && !Tree.contains(item, parent),
 		drop: (item) => {
-			if (Tree.is(item, Group) || Tree.is(item, Note)) {
+			if (Tree.is(item, itemAllowedTypes)) {
 				moveItem(item, parent.indexOf(props.note), parent);
 			}
 			return;
@@ -330,13 +328,13 @@ function NoteToolbar(props: {
 
 function AddNoteButton(props: { target: Items; clientId: string }): JSX.Element {
 	const [{ isActive }, drop] = useDrop(() => ({
-		accept: [dragType.NOTE, dragType.GROUP],
+		accept: [dragType.ITEM],
 		collect: (monitor) => ({
 			isActive: monitor.canDrop() && monitor.isOver(),
 		}),
 		canDrop: (item) => Tree.is(item, itemAllowedTypes) && !Tree.contains(item, props.target),
 		drop: (item) => {
-			if (Tree.is(item, Note) || Tree.is(item, Group)) {
+			if (Tree.is(item, itemAllowedTypes)) {
 				const parent = Tree.parent(item);
 				if (Tree.is(parent, Items)) {
 					const index = parent.indexOf(item);

@@ -31,8 +31,7 @@ function hashCode(str: string): number {
 }
 
 export enum dragType {
-	NOTE = "Note",
-	GROUP = "Group",
+	ITEM = "Item",
 }
 
 export enum selectAction {

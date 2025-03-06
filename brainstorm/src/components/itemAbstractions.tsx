@@ -45,6 +45,12 @@ export interface ItemExtensions {
 	 * When deleting this item, it gets replaced by the returned items.
 	 */
 	deleted(oldParent: Items, oldIndex: number): void;
+
+	/**
+	 * Customizes top level insert.
+	 * Allows things like Groups moving selected items into themselves.
+	 */
+	postInsertNew?(items: Items, session: Session, clientId: string): void;
 }
 
 /**
@@ -72,6 +78,8 @@ export interface ItemStatic {
 	 * TODO: currently this is not required, but it could be.
 	 */
 	AddButton?(props: { target: Items; clientId: string }): JSX.Element;
+
+	readonly icon: JSX.Element;
 }
 
 /**

@@ -17,6 +17,7 @@ import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions
 import { itemAllowedTypes, Items } from "./items.js";
 import { Group } from "./group.js";
 import { Component } from "fluid-framework/alpha";
+import { NoteRegular } from "@fluentui/react-icons";
 
 const sf = new SchemaFactory("10d348df-90a9-4e2c-a45d-21ba6c66b799");
 
@@ -54,6 +55,7 @@ export class Note
 	public deleted(): void {}
 
 	public static readonly description = "Note";
+	public static readonly icon = (<NoteRegular />);
 	public static default(author: string): Note {
 		const timeStamp = new Date().getTime();
 		return new Note({

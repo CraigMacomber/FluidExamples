@@ -84,7 +84,8 @@ export const updateRemoteNoteSelection = (
 	session.clients.insertAtEnd(s);
 };
 
-export const getSelectedNotes = (session: Session, clientId: string): string[] => {
+// Currently just Notes
+export const getSelectedItems = (session: Session, clientId: string): string[] => {
 	for (const c of session.clients) {
 		if (c.clientId == clientId) {
 			return c.selected.concat();

@@ -12,11 +12,13 @@ import { itemAllowedTypes, Items, ItemsView } from "./items.js";
 import React, { JSX, useEffect, useState } from "react";
 import { dragType } from "../utils/utils.js";
 import { ConnectableElement, useDrag, useDrop } from "react-dnd";
-import { moveItem } from "../utils/app_helpers.js";
+import { findNote, moveItem } from "../utils/app_helpers.js";
 import { DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
 import { Note } from "./note.js";
 import { Component } from "fluid-framework/alpha";
+import { getSelectedItems } from "../utils/session_helpers.js";
+import { RectangleLandscapeRegular } from "@fluentui/react-icons";
 
 const sf = new SchemaFactory("d3872080-b9bd-4315-a210-0dda4fedcb18");
 
@@ -30,11 +32,23 @@ export class Group
 	implements Item
 {
 	public static readonly description = "Group";
+	public static readonly icon = (<RectangleLandscapeRegular />);
 	public static default(author: string, name = "[new group]"): Group {
 		return new Group({
 			name,
 			items: new Items([]),
 		});
+	}
+
+	public insertNew(items: Items, session: Session, clientId: string): void {
+		// Move selected items into this group
+		const ids = getSelectedItems(session, clientId);
+		for (const id of ids) {
+			const n = findNote(items, id);
+			if (Tree.is(n, itemAllowedTypes)) {
+				moveItem(n, Infinity, this.items);
+			}
+		}
 	}
 
 	public deleted(oldParent: Items, oldIndex: number): void {

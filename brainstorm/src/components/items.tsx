@@ -98,7 +98,7 @@ export interface ItemParent {
 	deleteItem(item: Item): void;
 }
 
-interface HasItemParent {
+interface IsItemParent {
 	get [ItemParentSymbol](): ItemParent;
 }
 

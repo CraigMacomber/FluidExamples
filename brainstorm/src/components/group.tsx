@@ -1,14 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-// Include a UUID to guarantee that this schema will be uniquely identifiable.
-
 import { SchemaFactory, Tree } from "fluid-framework";
 import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions.js";
-import { itemAllowedTypes, Items, ItemsView } from "./items.js";
+import { itemAllowedTypes, Items } from "./items.js";
 import React, { JSX, useEffect, useState } from "react";
 import { dragType } from "../utils/utils.js";
 import { ConnectableElement, useDrag, useDrop } from "react-dnd";
@@ -19,6 +16,7 @@ import { Component, TreeAlpha } from "fluid-framework/alpha";
 import { getSelectedItems } from "../utils/session_helpers.js";
 import { RectangleLandscapeRegular } from "@fluentui/react-icons";
 
+// Include a UUID to guarantee that this schema will be uniquely identifiable.
 const sf = new SchemaFactory("d3872080-b9bd-4315-a210-0dda4fedcb18");
 
 // Define the schema for the container of notes.
@@ -107,24 +105,9 @@ export function GroupView(props: {
 	session: Session;
 	fluidMembers: string[];
 }): JSX.Element {
-	// copy the array of items from the group
-	// to force a re-render when the array changes
-	const [itemsArray, setItemsArray] = useState<Item[]>(props.group.items.map((item) => item));
 	const [name, setName] = useState(props.group.name);
 
-	// Register for tree deltas when the component mounts.
-	// Any time the items array changes, the app will update
-	// Note, we are only listening to changes to the array
-	// not the items within the array. Those changes are
-	// handled by the NoteView component.
-	useEffect(() => {
-		const unsubscribe = Tree.on(props.group.items, "nodeChanged", () => {
-			setItemsArray(props.group.items.map((item) => item));
-		});
-		return unsubscribe;
-	}, []);
-
-	// Register for tree deltas when the component mounts.
+	// Register for tree changes when the component mounts.
 	// Any time the group changes, the app will update
 	useEffect(() => {
 		const unsubscribe = Tree.on(props.group, "nodeChanged", () => {
@@ -133,8 +116,40 @@ export function GroupView(props: {
 		return unsubscribe;
 	}, []);
 
-	const parent = Tree.parent(props.group);
+	const [items, setItems] = useState(props.group.items);
+	useEffect(() => {
+		const unsubscribe = Tree.on(props.group, "nodeChanged", () => {
+			setItems(props.group.items);
+		});
+		return unsubscribe;
+	}, []);
+
+	const [parent, setParent] = useState(Tree.parent(props.group));
+	useEffect(() => {
+		const oldParent = Tree.parent(props.group);
+		if (oldParent === undefined) {
+			const branch = TreeAlpha.branch(props.group);
+			if (branch === undefined) {
+				// TODO: make invalidation in this case possible. Maybe a parent change event that is robust?
+				throw new Error(
+					"Cannot view group that is the root of an un-hydrated tree since there is no API to do invalidation for it currently",
+				);
+			} else {
+				// TODO: make invalidation in this case possible. Maybe a parent change event that is robust?
+				throw new Error(
+					"Cannot view group that is the root of a hydrated tree since TreeBranchEvents doesn't extend TreeViewEvents so no access to rootChanged event",
+				);
+			}
+		}
+		const unsubscribe = Tree.on(oldParent, "nodeChanged", () => {
+			setParent(Tree.parent(props.group));
+		});
+		return unsubscribe;
+	}, []);
+
+	// TODO: use ItemParent here instead of Items.
 	if (!Tree.is(parent, Items)) {
+		// TODO: decide how drag and drop should handle this case instead of no-op the whole view
 		return <></>;
 	}
 
@@ -181,6 +196,8 @@ export function GroupView(props: {
 		e.stopPropagation();
 	};
 
+	const ItemsView = items.View;
+
 	return (
 		<div
 			onClick={(e) => handleClick(e)}
@@ -205,8 +222,6 @@ export function GroupView(props: {
 					deletePile={props.group.delete}
 				/>
 				<ItemsView
-					items={itemsArray}
-					parent={props.group.items}
 					clientId={props.clientId}
 					session={props.session}
 					fluidMembers={props.fluidMembers}

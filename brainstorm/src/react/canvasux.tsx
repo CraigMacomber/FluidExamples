@@ -22,11 +22,12 @@ import {
 } from "./buttonux.js";
 import { undefinedUserId } from "../utils/utils.js";
 import { undoRedo } from "../utils/undo.js";
-import { itemAllowedTypes, Items } from "../components/items.js";
 import { evaluateLazySchema } from "fluid-framework/alpha";
+import { ItemsSchema } from "../components/itemAbstractions.js";
+import { itemAllowedTypes, Items } from "../schema/app_schema.js";
 
 export function Canvas(props: {
-	items: TreeView<typeof Items>;
+	items: TreeView<ItemsSchema>;
 	sessionTree: TreeView<typeof Session>;
 	audience: IServiceAudience<IMember>;
 	container: IFluidContainer;

@@ -11,10 +11,9 @@ import {
 	SchemaFactory,
 	Tree,
 	TreeNode,
+	TreeStatus,
 } from "fluid-framework/alpha";
 import { Session } from "../schema/session_schema.js";
-import { Group } from "./group.js";
-import { Note } from "./note.js";
 import React, { JSX, useEffect, useState } from "react";
 import { Item, ItemSchema } from "./itemAbstractions.js";
 
@@ -22,11 +21,11 @@ const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
 
 export const ItemParentSymbol = Symbol("ItemParent");
 
-function makeItems(items: Component.LazyArray<ItemSchema>) {
+export function makeItems(itemTypes: Component.LazyArray<ItemSchema>) {
 	// Schema for a list of Notes and Groups.
 	return class Items extends sf.array(
 		"Items",
-		customizeSchemaTyping(items).simplifiedUnrestricted<Item>(),
+		customizeSchemaTyping(itemTypes).simplifiedUnrestricted<Item>(),
 	) {
 		public get [ItemParentSymbol](): ItemParent {
 			// eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -35,6 +34,42 @@ function makeItems(items: Component.LazyArray<ItemSchema>) {
 				deleteItem(item: Item): void {
 					const index = parentArray.indexOf(item);
 					parentArray.removeAt(index);
+				},
+				tryStealItem(item: Item, placeBefore?: Item): void {
+					// need to test that the destination or the item being dragged hasn't been deleted
+					// because the move may have been initiated through a drag and drop which
+					// is asynchronous - the state may have changed during the drag but this function
+					// is operating based on the state at the moment the drag began
+					if (
+						Tree.status(parentArray) != TreeStatus.InDocument ||
+						Tree.status(item) != TreeStatus.InDocument
+					)
+						return;
+
+					const source = Tree.parent(item);
+					if (Tree.contains(item, parentArray)) {
+						// Move would create a cycle: a item can't be moved under itself.
+						return;
+					}
+					if (!Tree.is(source, Items)) {
+						// Currently this code only supports moving items from another Items.
+						// TODO: Once SharedTree supports inserting removed items into arrays,
+						// tryStealItem could be split into a call to deleteItem and a call to insert which would fix this limitation.
+						return;
+					}
+					if (!Tree.is(item, itemTypes)) {
+						// Invalid input
+						return;
+					}
+
+					const index = source.indexOf(item);
+
+					if (placeBefore === undefined) {
+						parentArray.moveToEnd(index, source);
+					} else {
+						const destinationIndex = parentArray.indexOf(placeBefore);
+						parentArray.moveToIndex(destinationIndex, index, source);
+					}
 				},
 			};
 		}
@@ -83,7 +118,7 @@ function makeItems(items: Component.LazyArray<ItemSchema>) {
 					</div>
 				);
 			} else {
-				const kinds = itemAllowedTypes.map(evaluateLazySchema);
+				const kinds = itemTypes.map(evaluateLazySchema);
 				for (const kind of kinds) {
 					if (kind.AddButton !== undefined) {
 						// TODO: use key?
@@ -100,25 +135,24 @@ function makeItems(items: Component.LazyArray<ItemSchema>) {
 
 export type Items = NodeFromSchema<ReturnType<typeof makeItems>>;
 
-// Below here in this file, there are dependencies on the concrete set of Item types.
-
-export const itemAllowedTypes: Component.LazyArray<ItemSchema> = [() => Group, () => Note];
-
-export const Items = makeItems(itemAllowedTypes);
-
 export interface ItemParent {
 	/**
 	 * Removes a child Item.
 	 */
 	deleteItem(item: Item): void;
+
+	/**
+	 * Adds a child Item.
+	 */
+	tryStealItem(item: Item, placeBefore?: Item): void;
 }
 
 interface HasItemParent extends TreeNode {
 	readonly [ItemParentSymbol]: ItemParent;
 }
 
-function tryAsItemParent(node: TreeNode): ItemParent | undefined {
-	return (node as HasItemParent)[ItemParentSymbol];
+export function tryAsItemParent(node: TreeNode | undefined): ItemParent | undefined {
+	return (node as HasItemParent)?.[ItemParentSymbol];
 }
 
 export function removeItemFromParent(item: Item): void {
@@ -132,4 +166,8 @@ export function removeItemFromParent(item: Item): void {
 			itemParent.deleteItem(item);
 		}
 	}
+}
+
+export function canDropItem(item: Item, target: TreeNode | undefined): boolean {
+	return target !== undefined && !Tree.contains(item, target);
 }

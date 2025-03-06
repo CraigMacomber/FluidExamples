@@ -5,16 +5,22 @@
 
 import { SchemaFactory, Tree } from "fluid-framework";
 import { Item, itemFields, ItemSchema, MyAppComponent } from "./itemAbstractions.js";
-import { itemAllowedTypes, Items } from "./items.js";
 import React, { JSX, useEffect, useState } from "react";
 import { dragType } from "../utils/utils.js";
 import { ConnectableElement, useDrag, useDrop } from "react-dnd";
-import { findItem, moveItem } from "../utils/app_helpers.js";
+import { findItem } from "../utils/app_helpers.js";
 import { DeleteButton } from "../react/buttonux.js";
 import { Session } from "../schema/session_schema.js";
 import { Component, TreeAlpha } from "fluid-framework/alpha";
 import { getSelectedItems } from "../utils/session_helpers.js";
 import { RectangleLandscapeRegular } from "@fluentui/react-icons";
+import { canDropItem, tryAsItemParent } from "./items.js";
+
+// This import is a bit sketchy as it causes a cycle, so it can only be used lazily and with care.
+// This cycle is necessary since the schema is actually co-recursive (Items allows Group as a child type).
+// This cyclic import could be avoided by moving the code which needs it (i.e. the Group class) inside of groupComponent.itemTypes
+// and accessing it from the provided config instead.
+import { Items } from "../schema/app_schema.js";
 
 // Include a UUID to guarantee that this schema will be uniquely identifiable.
 const sf = new SchemaFactory("d3872080-b9bd-4315-a210-0dda4fedcb18");
@@ -53,8 +59,8 @@ export class Group
 		const ids = getSelectedItems(session, clientId);
 		for (const id of ids) {
 			const n = findItem(branch.root, id);
-			if (Tree.is(n, itemAllowedTypes)) {
-				moveItem(n, Infinity, this.items);
+			if (n !== undefined) {
+				tryAsItemParent(this.items)?.tryStealItem(n);
 			}
 		}
 	}
@@ -124,35 +130,6 @@ export function GroupView(props: {
 		return unsubscribe;
 	}, []);
 
-	const [parent, setParent] = useState(Tree.parent(props.group));
-	useEffect(() => {
-		const oldParent = Tree.parent(props.group);
-		if (oldParent === undefined) {
-			const branch = TreeAlpha.branch(props.group);
-			if (branch === undefined) {
-				// TODO: make invalidation in this case possible. Maybe a parent change event that is robust?
-				throw new Error(
-					"Cannot view group that is the root of an un-hydrated tree since there is no API to do invalidation for it currently",
-				);
-			} else {
-				// TODO: make invalidation in this case possible. Maybe a parent change event that is robust?
-				throw new Error(
-					"Cannot view group that is the root of a hydrated tree since TreeBranchEvents doesn't extend TreeViewEvents so no access to rootChanged event",
-				);
-			}
-		}
-		const unsubscribe = Tree.on(oldParent, "nodeChanged", () => {
-			setParent(Tree.parent(props.group));
-		});
-		return unsubscribe;
-	}, []);
-
-	// TODO: use ItemParent here instead of Items.
-	if (!Tree.is(parent, Items)) {
-		// TODO: decide how drag and drop should handle this case instead of no-op the whole view
-		return <></>;
-	}
-
 	const [, drag] = useDrag(() => ({
 		type: dragType.ITEM,
 		item: props.group,
@@ -167,8 +144,8 @@ export function GroupView(props: {
 			isOver: !!monitor.isOver({ shallow: true }),
 			canDrop: !!monitor.canDrop(),
 		}),
-		canDrop: (item) => Tree.is(item, itemAllowedTypes) && !Tree.contains(item, parent),
-		drop: (item, monitor) => {
+		canDrop: (item: Item) => canDropItem(item, Tree.parent(props.group)),
+		drop: (item: Item, monitor) => {
 			const didDrop = monitor.didDrop();
 			if (didDrop) {
 				return;
@@ -179,9 +156,7 @@ export function GroupView(props: {
 				return;
 			}
 
-			if (Tree.is(item, itemAllowedTypes)) {
-				moveItem(item, parent.indexOf(props.group), parent);
-			}
+			tryAsItemParent(Tree.parent(props.group))?.tryStealItem(item, props.group);
 
 			return;
 		},
@@ -260,7 +235,8 @@ export function DeletePileButton(props: { deletePile: () => void }): JSX.Element
 }
 
 export const groupComponent: MyAppComponent = {
-	itemTypes(): Component.LazyArray<ItemSchema> {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	itemTypes(config): Component.LazyArray<ItemSchema> {
 		return [() => Group];
 	},
 };

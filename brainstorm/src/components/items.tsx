@@ -10,6 +10,7 @@ import {
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
+	TreeNode,
 } from "fluid-framework/alpha";
 import { Session } from "../schema/session_schema.js";
 import { Group } from "./group.js";
@@ -19,12 +20,31 @@ import { Item, ItemSchema } from "./itemAbstractions.js";
 
 const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
 
+const ItemParentSymbol = Symbol();
+
 function makeItems(items: Component.LazyArray<ItemSchema>) {
 	// Schema for a list of Notes and Groups.
 	return class Items extends sf.array(
 		"Items",
 		customizeSchemaTyping(items).simplifiedUnrestricted<Item>(),
-	) {};
+	) {
+		public get [ItemParentSymbol](): ItemParent {
+			return {
+				/**
+				 * Removes a node from its parent {@link Items}.
+				 * If the note is not in an {@link Items}, it is left unchanged.
+				 */
+				deleteItem(item: Item): void {
+					const parent = Tree.parent(item);
+					// Use type narrowing to ensure that parent is Items as expected for an Item.
+					if (Tree.is(parent, Items)) {
+						const index = parent.indexOf(item);
+						parent.removeAt(index);
+					}
+				},
+			};
+		}
+	};
 }
 
 export type Items = NodeFromSchema<ReturnType<typeof makeItems>>;
@@ -78,15 +98,14 @@ export function ItemsView(props: {
 	}
 }
 
-/**
- * Removes a node from its parent {@link Items}.
- * If the note is not in an {@link Items}, it is left unchanged.
- */
-export function deleteItem(item: Item): void {
+export interface ItemParent {
+	deleteItem(item: Item): void;
+}
+
+export function deleteItemFromParent(item: Item & TreeNode): void {
 	const parent = Tree.parent(item);
-	// Use type narrowing to ensure that parent is Items as expected for an Item.
 	if (Tree.is(parent, Items)) {
-		const index = parent.indexOf(item);
-		parent.removeAt(index);
+		const itemParent = parent[ItemParentSymbol];
+		itemParent.deleteItem(item);
 	}
 }

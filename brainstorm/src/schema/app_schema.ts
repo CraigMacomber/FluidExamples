@@ -13,6 +13,7 @@ import { noteComponent } from "../components/note.js";
 import { groupComponent } from "../components/group.js";
 import { Component, evaluateLazySchema } from "fluid-framework/alpha";
 import { makeItems, Items as ItemsType } from "../components/items.js";
+import { boxComponent } from "../components/box.js";
 
 /**
  * Example configuration type for an application.
@@ -47,7 +48,7 @@ export function composeComponents(allComponents: readonly MyAppComponent[]): MyA
 	return { ...config, items };
 }
 
-export const appConfig = composeComponents([groupComponent, noteComponent]);
+export const appConfig = composeComponents([groupComponent, noteComponent, boxComponent]);
 
 export const itemAllowedTypes: Component.LazyArray<ItemSchema> = appConfig.allowedItemTypes; // [() => Group, () => Note];
 

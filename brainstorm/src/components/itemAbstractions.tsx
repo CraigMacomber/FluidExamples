@@ -14,7 +14,7 @@ import {
 } from "fluid-framework/alpha";
 import type { Session } from "../schema/session_schema.js";
 import { JSX } from "react";
-import type { Items } from "./items.js";
+import type { Items, makeItems } from "./items.js";
 
 const sf = new SchemaFactory("d0e4467e-71fe-4951-a218-2f48eab646fb");
 
@@ -28,7 +28,7 @@ export const itemFields = {
 	id: sf.identifier,
 };
 
-export type ItemsSchema = typeof Items;
+export type ItemsSchema = ReturnType<typeof makeItems>;
 
 /**
  * Properties all item types must implement.

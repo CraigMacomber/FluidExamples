@@ -4,7 +4,6 @@
  */
 
 import { TreeViewConfiguration } from "fluid-framework";
-import { Items } from "../components/items.js";
 import type {
 	ItemSchema,
 	MyAppComponent,
@@ -13,6 +12,7 @@ import type {
 import { noteComponent } from "../components/note.js";
 import { groupComponent } from "../components/group.js";
 import { Component, evaluateLazySchema } from "fluid-framework/alpha";
+import { makeItems, Items as ItemsType } from "../components/items.js";
 
 /**
  * Example configuration type for an application.
@@ -41,7 +41,7 @@ export function composeComponents(allComponents: readonly MyAppComponent[]): MyA
 	);
 	const config: MyAppConfigPartial = {
 		allowedItemTypes: ItemTypes,
-		Items: Items,
+		Items: makeItems(ItemTypes),
 	};
 	const items = new Set(ItemTypes.map(evaluateLazySchema));
 	return { ...config, items };
@@ -49,8 +49,14 @@ export function composeComponents(allComponents: readonly MyAppComponent[]): MyA
 
 export const appConfig = composeComponents([groupComponent, noteComponent]);
 
+export const itemAllowedTypes: Component.LazyArray<ItemSchema> = appConfig.allowedItemTypes; // [() => Group, () => Note];
+
+export const Items = appConfig.Items;
+export type Items = ItemsType;
+
 // Export the tree config appropriate for this schema.
 // This is passed into the SharedTree when it is initialized.
+// This eagerly evaluates the schema, so anything uses by these schema (Like how Group uses Items) must be defined before this point.
 export const appTreeConfiguration = new TreeViewConfiguration(
 	// Schema for the root
 	{ schema: appConfig.Items },

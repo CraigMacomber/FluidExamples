@@ -10,10 +10,10 @@ import { IFluidContainer, IMember, IServiceAudience, TreeView } from "fluid-fram
 import { undefinedUserId } from "../utils/utils.js";
 import { Canvas } from "./canvasux.js";
 import { undoRedo } from "../utils/undo.js";
-import { Items } from "../components/items.js";
+import { ItemsSchema } from "../components/itemAbstractions.js";
 
 export function ReactApp(props: {
-	items: TreeView<typeof Items>;
+	items: TreeView<ItemsSchema>;
 	sessionTree: TreeView<typeof Session>;
 	audience: IServiceAudience<IMember>;
 	container: IFluidContainer;

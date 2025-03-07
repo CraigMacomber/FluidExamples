@@ -142,7 +142,10 @@ export interface ItemParent {
 	deleteItem(item: Item): void;
 
 	/**
-	 * Adds a child Item.
+	 * Moves an a Item into this container if possible.
+	 *
+	 * If this parent is a collection with a logical ordering,
+	 * then the Item is placed before `placeBefore` if specified, and at the end otherwise.
 	 */
 	tryStealItem(item: Item, placeBefore?: Item): void;
 }
@@ -168,6 +171,11 @@ export function removeItemFromParent(item: Item): void {
 	}
 }
 
+/**
+ * True if and only if target exists and is not inside of Item.
+ *
+ * Can be used with {@link ItemParent.tryStealItem} to do the actual move.
+ */
 export function canDropItem(item: Item, target: TreeNode | undefined): boolean {
 	return target !== undefined && !Tree.contains(item, target);
 }

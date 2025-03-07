@@ -65,11 +65,5 @@ export async function loadApp(
 		</DndProvider>,
 	);
 
-	// root.render(
-	// 	<DndProvider backend={HTML5Backend}>
-	// 		<MainView root={appTree.tree.root} />
-	// 	</DndProvider>,
-	// );
-
 	return container;
 }
